@@ -112,7 +112,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
 
     const encodedMessage = encodeURIComponent(message);
     // Cambiar por el teléfono del administrador (aquí usamos un placeholder que redirige al chat)
-    const phoneNo = ""; // Dejar vacío para abrir chat con el remitente o rellenar con el teléfono de la novia.
+    const phoneNo = "+573166483864"; // Dejar vacío para abrir chat con el remitente o rellenar con el teléfono de la novia.
     const waUrl = `https://wa.me/${phoneNo}?text=${encodedMessage}`;
     
     setWhatsappLink(waUrl);

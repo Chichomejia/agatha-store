@@ -10,7 +10,8 @@ import {
   Eye, 
   X, 
   Search, 
-  ArrowUpRight
+  ArrowUpRight,
+  Printer
 } from 'lucide-react';
 import type { Product, Client, Sale } from '../types';
 import { dbProducts, dbClients, dbSales, formatCOP } from '../services/db';
@@ -282,6 +283,215 @@ export const AdminView: React.FC = () => {
     c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     c.phone.includes(searchQuery)
   );
+
+  const handlePrintInvoice = (sale: Sale) => {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.width = '0px';
+    iframe.style.height = '0px';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document || iframe.contentDocument;
+    if (!doc) return;
+
+    const itemsHtml = sale.items.map(item => `
+      <tr>
+        <td>${item.productName}</td>
+        <td style="text-align: center;">${item.quantity}</td>
+        <td style="text-align: right;">${formatCOP(item.priceAtSale)}</td>
+        <td style="text-align: right;">${formatCOP(item.priceAtSale * item.quantity)}</td>
+      </tr>
+    `).join('');
+
+    const totalItems = sale.items.reduce((s, i) => s + i.quantity, 0);
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Factura ${sale.id}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+            body {
+              font-family: 'Outfit', 'Inter', sans-serif;
+              color: #333;
+              margin: 0;
+              padding: 20px;
+              font-size: 14px;
+              line-height: 1.5;
+            }
+            .invoice-box {
+              max-width: 800px;
+              margin: auto;
+              border: 1px solid #eee;
+              box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+              padding: 30px;
+              border-radius: 8px;
+              background: #fff;
+            }
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              border-bottom: 2px solid #8b5cf6;
+              padding-bottom: 20px;
+              margin-bottom: 20px;
+            }
+            .logo {
+              font-size: 28px;
+              font-weight: 700;
+              color: #8b5cf6;
+              margin: 0;
+            }
+            .logo span {
+              color: #ec4899;
+            }
+            .store-info {
+              text-align: right;
+              font-size: 12px;
+              color: #666;
+            }
+            .details-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 20px;
+              margin-bottom: 30px;
+            }
+            .panel {
+              background: #f9fafb;
+              padding: 15px;
+              border-radius: 6px;
+              border: 1px solid #f3f4f6;
+            }
+            .panel h4 {
+              margin: 0 0 10px 0;
+              color: #8b5cf6;
+              font-size: 14px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .panel p {
+              margin: 4px 0;
+              font-size: 13px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 20px;
+            }
+            th {
+              background: #f3f4f6;
+              color: #4b5563;
+              font-weight: 600;
+              text-align: left;
+              padding: 10px;
+              font-size: 13px;
+              border-bottom: 1px solid #e5e7eb;
+            }
+            td {
+              padding: 12px 10px;
+              border-bottom: 1px solid #f3f4f6;
+              font-size: 13px;
+            }
+            .total-row td {
+              border-top: 2px solid #e5e7eb;
+              border-bottom: none;
+              font-weight: 700;
+              font-size: 15px;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 40px;
+              font-size: 12px;
+              color: #9ca3af;
+              border-top: 1px solid #f3f4f6;
+              padding-top: 20px;
+            }
+            @media print {
+              body {
+                padding: 0;
+                background: none;
+              }
+              .invoice-box {
+                border: none;
+                box-shadow: none;
+                padding: 0;
+                max-width: 100%;
+              }
+              @page {
+                margin: 1.5cm;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="invoice-box">
+            <div class="header">
+              <div>
+                <h1 class="logo">Agatha <span>Store</span></h1>
+                <p style="margin: 5px 0 0 0; font-size: 13px; color: #666; font-style: italic;">Maquillaje & Cuidado de la Piel 💖</p>
+              </div>
+              <div class="store-info">
+                <p style="font-weight: 600; font-size: 14px; margin: 0 0 5px 0; color: #333;">FACTURA DE VENTA</p>
+                <p style="margin: 2px 0;"><strong>No:</strong> ${sale.id}</p>
+                <p style="margin: 2px 0;"><strong>Fecha:</strong> ${new Date(sale.date).toLocaleString('es-ES')}</p>
+              </div>
+            </div>
+
+            <div class="details-grid">
+              <div class="panel">
+                <h4>Cliente</h4>
+                <p><strong>Nombre:</strong> ${sale.clientName}</p>
+                <p><strong>Teléfono:</strong> ${sale.clientPhone}</p>
+              </div>
+              <div class="panel">
+                <h4>Detalles de Entrega</h4>
+                <p><strong>Notas:</strong> ${sale.notes || 'Ninguna'}</p>
+                <p><strong>Estado del Pedido:</strong> ${sale.status === 'completed' ? 'Cobrado' : sale.status === 'pending' ? 'Pendiente' : 'Cancelado'}</p>
+              </div>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th style="text-align: center; width: 80px;">Cant.</th>
+                  <th style="text-align: right; width: 120px;">Precio Unit.</th>
+                  <th style="text-align: right; width: 120px;">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+                <tr class="total-row">
+                  <td colspan="2">Total Artículos: ${totalItems}</td>
+                  <td style="text-align: right;">Total General:</td>
+                  <td style="text-align: right; color: #8b5cf6;">${formatCOP(sale.total)}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="footer">
+              <p>¡Gracias por tu compra! Tu apoyo significa el mundo para nosotros. 💖</p>
+              <p>Si tienes alguna pregunta sobre esta factura, contáctanos por WhatsApp.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    doc.open();
+    doc.write(html);
+    doc.close();
+
+    iframe.contentWindow?.focus();
+    setTimeout(() => {
+      iframe.contentWindow?.print();
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+    }, 500);
+  };
 
   return (
     <div className="admin-view">
@@ -882,7 +1092,17 @@ export const AdminView: React.FC = () => {
             <button className="modal-close" onClick={() => setSelectedSaleDetail(null)}>
               <X size={24} />
             </button>
-            <h3>Detalle del Pedido</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', marginRight: '2rem' }}>
+              <h3 style={{ margin: 0 }}>Detalle del Pedido</h3>
+              <button 
+                className="btn btn-outline" 
+                onClick={() => handlePrintInvoice(selectedSaleDetail)}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}
+              >
+                <Printer size={16} />
+                <span>Imprimir Factura</span>
+              </button>
+            </div>
             
             <div className="sale-details-grid">
               <div className="sale-details-column">

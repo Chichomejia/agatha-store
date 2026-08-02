@@ -226,6 +226,66 @@ const getLocalSales = (): Sale[] => {
 };
 
 // --- SERVICIOS DE PRODUCTOS ---
+// Función para comprimir y redimensionar imágenes del lado del cliente
+const compressImage = (file: File): Promise<Blob> => {
+  return new Promise((resolve) => {
+    if (!file.type.startsWith('image/')) {
+      resolve(file);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width = Math.round((width * MAX_HEIGHT) / height);
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              resolve(file);
+            }
+          },
+          'image/jpeg',
+          0.7
+        );
+      };
+      img.onerror = () => resolve(file);
+    };
+    reader.onerror = () => resolve(file);
+  });
+};
+
 export const dbProducts = {
   getAll: async (): Promise<Product[]> => {
     if (firestore) {
@@ -281,12 +341,35 @@ export const dbProducts = {
   },
 
   uploadImage: async (file: File, onProgress?: (progress: number) => void): Promise<string> => {
+    // 1. Intentar comprimir la imagen
+    let uploadData: Blob = file;
+    try {
+      uploadData = await compressImage(file);
+    } catch (e) {
+      console.error('Error comprimiendo imagen:', e);
+    }
+
+    const localFallback = (): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        onProgress?.(30);
+        reader.onloadend = () => {
+          onProgress?.(100);
+          resolve(reader.result as string);
+        };
+        reader.onerror = () => {
+          reject(new Error('Error leyendo archivo local'));
+        };
+        reader.readAsDataURL(uploadData);
+      });
+    };
+
     if (storage) {
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split('.').pop() || 'jpg';
       const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
       const storageRef = ref(storage, `products/${fileName}`);
       
-      const uploadTask = uploadBytesResumable(storageRef, file);
+      const uploadTask = uploadBytesResumable(storageRef, uploadData);
       
       return new Promise((resolve, reject) => {
         uploadTask.on('state_changed', 
@@ -294,35 +377,35 @@ export const dbProducts = {
             const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
             onProgress?.(progress);
           }, 
-          (error) => {
-            console.error('Error subiendo foto a Firebase:', error);
-            reject(error);
+          async (error) => {
+            console.warn('Error subiendo foto a Firebase Storage, activando fallback local a Base64:', error);
+            try {
+              const base64 = await localFallback();
+              resolve(base64);
+            } catch (fallbackError) {
+              reject(error);
+            }
           }, 
           async () => {
             try {
               const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
               resolve(downloadURL);
             } catch (err) {
-              reject(err);
+              console.warn('Error obteniendo URL de descarga de Firebase, activando fallback local a Base64:', err);
+              try {
+                const base64 = await localFallback();
+                resolve(base64);
+              } catch (fallbackError) {
+                reject(err);
+              }
             }
           }
         );
       });
     }
 
-    // Fallback: Convertir a base64 para guardarlo localmente
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      onProgress?.(30);
-      reader.onloadend = () => {
-        onProgress?.(100);
-        resolve(reader.result as string);
-      };
-      reader.onerror = () => {
-        reject(new Error('Error leyendo archivo local'));
-      };
-      reader.readAsDataURL(file);
-    });
+    // Fallback directo si no hay Storage configurado
+    return localFallback();
   }
 };
 

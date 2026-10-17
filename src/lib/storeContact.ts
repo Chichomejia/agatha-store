@@ -1,0 +1,3 @@
+export const STORE_WHATSAPP_NUMBER = "573026931697";
+export const STORE_WHATSAPP_DISPLAY = "+57 302 693 1697";
+export const STORE_WHATSAPP_URL = `https://wa.me/${STORE_WHATSAPP_NUMBER}`;

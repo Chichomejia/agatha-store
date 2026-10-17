@@ -3,6 +3,7 @@ export interface SaleItem {
   priceAtSale: number;
   productId: string;
   productName: string;
+  tone?: string;
   quantity: number;
 }
 

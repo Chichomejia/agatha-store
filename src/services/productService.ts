@@ -47,6 +47,9 @@ export async function getProducts(): Promise<Product[]> {
         images: Array.isArray(data.images)
           ? data.images
           : [],
+        ...(Array.isArray(data.tones)
+          ? { tones: data.tones.filter((tone: unknown): tone is string => typeof tone === "string") }
+          : {}),
         category: data.category ?? "",
         ...(typeof data.rating === "number" && Number.isFinite(data.rating)
           ? { rating: data.rating }
@@ -91,6 +94,9 @@ export async function getAdminProducts(): Promise<Product[]> {
       price: Number(data.price ?? 0),
       image: data.imageUrl ?? "",
       images: Array.isArray(data.images) ? data.images : [],
+      ...(Array.isArray(data.tones)
+        ? { tones: data.tones.filter((tone: unknown): tone is string => typeof tone === "string") }
+        : {}),
       category: data.category ?? "",
       ...(typeof data.rating === "number" && Number.isFinite(data.rating)
         ? { rating: data.rating }
@@ -146,6 +152,9 @@ export async function getProductById(
         : data.imageUrl
           ? [data.imageUrl]
           : [],
+      ...(Array.isArray(data.tones)
+        ? { tones: data.tones.filter((tone: unknown): tone is string => typeof tone === "string") }
+        : {}),
       category: data.category ?? "",
       ...(typeof data.rating === "number" && Number.isFinite(data.rating)
         ? { rating: data.rating }
@@ -177,6 +186,7 @@ interface CreateProductData {
   stock: number;
   imageUrl: string;
   images?: string[];
+  tones?: string[];
 }
 export async function createProduct(
   product: CreateProductData
@@ -206,6 +216,7 @@ export async function createProduct(
 
       // Todas las imágenes
       images,
+      ...(product.tones?.length ? { tones: product.tones } : {}),
 
       isActive: true,
       createdAt: new Date(),
@@ -251,6 +262,7 @@ interface UpdateProductData {
   stock: number;
   imageUrl: string;
   images?: string[];
+  tones?: string[];
 }
 
 export async function updateProduct(
@@ -284,6 +296,7 @@ export async function updateProduct(
       cost: deleteField(),
       imageUrl: images[0] ?? "",
       images,
+      tones: product.tones?.length ? product.tones : deleteField(),
     });
     batch.set(privateCostRef, {
       cost: Number(product.cost),
@@ -298,6 +311,7 @@ export async function updateProduct(
       ...product,
       imageUrl: images[0] ?? "",
       images,
+      ...(product.tones?.length ? { tones: product.tones } : {}),
     };
   } catch (error) {
     console.error(

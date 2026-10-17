@@ -69,7 +69,7 @@ export default function CheckoutPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderNumber, setOrderNumber] = useState("");
   const [confirmedOrder, setConfirmedOrder] = useState<{
-    items: { productName: string; quantity: number; price: number }[];
+    items: { productName: string; quantity: number; price: number; tone?: string }[];
     subtotal: number;
     total: number;
   } | null>(null);
@@ -110,12 +110,18 @@ export default function CheckoutPage() {
     void refreshCart();
   }, [isLoaded, items.length, refreshCart]);
 
+  const quantitiesByProduct = new Map<string, number>();
+  for (const item of items) {
+    quantitiesByProduct.set(item.product.id, (quantitiesByProduct.get(item.product.id) ?? 0) + item.quantity);
+  }
   const hasStockIssues = items.some(
     (item) =>
       !Number.isInteger(item.quantity) ||
       item.quantity <= 0 ||
-      item.product.stock < item.quantity,
-  );
+      (item.product.tones?.length
+        ? !item.tone || !item.product.tones.includes(item.tone)
+        : Boolean(item.tone)),
+  ) || items.some((item) => (quantitiesByProduct.get(item.product.id) ?? 0) > item.product.stock);
 
   if (!isLoaded || cartReview === "loading") {
     return (
@@ -262,13 +268,14 @@ export default function CheckoutPage() {
     productName: item.product.name,
     price: item.product.price,
     quantity: item.quantity,
+    ...(item.tone ? { tone: item.tone } : {}),
   }));
   const confirmedSubtotal = confirmedOrder?.subtotal ?? totalPrice;
   const confirmedTotal = confirmedOrder?.total ?? totalPrice;
   const productsMessage = confirmedItems
     .map(
       (item) =>
-        `• ${item.productName} x${item.quantity} — $${(
+        `• ${item.productName}${item.tone ? ` — Tono: ${item.tone}` : ""} x${item.quantity} — $${(
           item.price * item.quantity
         ).toLocaleString("es-CO")}`
     )
@@ -374,7 +381,7 @@ ${form.notes || "Ninguna"}
               <ul className="mt-3 space-y-2 text-sm text-gray-600">
                 {confirmedOrder.items.map((item, index) => (
                   <li key={`${item.productName}-${index}`} className="flex justify-between gap-4">
-                    <span>{item.quantity} × {item.productName}</span>
+                    <span>{item.quantity} × {item.productName}{item.tone ? ` · Tono: ${item.tone}` : ""}</span>
                     <span className="shrink-0">${(item.price * item.quantity).toLocaleString("es-CO")}</span>
                   </li>
                 ))}
@@ -524,7 +531,7 @@ ${form.notes || "Ninguna"}
 
         {cartReview === "ready" && hasStockIssues && (
           <div role="alert" className="mb-6 flex flex-col items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900 sm:flex-row sm:justify-between sm:gap-4">
-            <p>La disponibilidad cambió. Ajusta o elimina los productos afectados antes de confirmar.</p>
+            <p>Revisa que cada producto tenga un tono disponible y que la cantidad total no supere el stock. Corrige el carrito antes de confirmar.</p>
             <Link href="/carrito" className="inline-flex min-h-11 items-center rounded-lg px-2 font-semibold underline underline-offset-2">
               Revisar carrito
             </Link>
@@ -664,7 +671,7 @@ ${form.notes || "Ninguna"}
 
               {items.map((item) => (
                 <div
-                  key={item.product.id}
+                  key={`${item.product.id}-${item.tone ?? "default"}`}
                   className="flex justify-between gap-4"
                 >
                   <div>
@@ -675,6 +682,7 @@ ${form.notes || "Ninguna"}
                     <p className="text-sm text-gray-500">
                       Cantidad: {item.quantity}
                     </p>
+                    {item.tone && <p className="text-sm font-medium text-pink-700">Tono: {item.tone}</p>}
                   </div>
 
                   <p className="font-semibold text-gray-900">

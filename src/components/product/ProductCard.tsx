@@ -166,9 +166,9 @@ export default function ProductCard({ product }: Props) {
                 <LiquidButton
                   disabled={product.stock <= 0}
                   className="w-full sm:w-auto"
-                  onClick={() => addToCart(product)}
+                  onClick={() => product.tones?.length ? setIsModalOpen(true) : addToCart(product)}
                 >
-                  {product.stock <= 0 ? "Agotado" : "Agregar"}
+                  {product.stock <= 0 ? "Agotado" : product.tones?.length ? "Elegir tono" : "Agregar"}
                 </LiquidButton>
               </div>
 

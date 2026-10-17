@@ -26,6 +26,7 @@ const orderSchema = z
             productId: z.string().regex(/^[^/]{1,128}$/),
             quantity: z.number().int().positive().max(1000).refine(Number.isSafeInteger),
             expectedPrice: z.number().finite().nonnegative(),
+            tone: z.string().trim().min(1).max(50).optional(),
           })
           .strict(),
       )
@@ -60,6 +61,7 @@ function matchesExistingOrder(
         savedItem.productId === submittedItem.productId &&
         savedItem.quantity === submittedItem.quantity &&
         savedItem.price === submittedItem.expectedPrice
+        && (savedItem.tone ?? undefined) === submittedItem.tone
       );
     })
   );
@@ -176,6 +178,15 @@ export async function POST(request: Request) {
       const validatedItems = items.map((item) => {
         const product = productDataById.get(item.productId)!;
         const price = Number(product.price);
+        const availableTones = Array.isArray(product.tones)
+          ? product.tones.filter((tone: unknown): tone is string => typeof tone === "string")
+          : [];
+        if (availableTones.length > 0 && (!item.tone || !availableTones.includes(item.tone))) {
+          throw new Error(`Elige un tono disponible para ${product.name ?? item.productId}.`);
+        }
+        if (availableTones.length === 0 && item.tone) {
+          throw new Error(`El producto ${product.name ?? item.productId} no tiene tonos configurados.`);
+        }
         if (!Number.isSafeInteger(price) || price < 0) {
           throw new Error(`El precio de ${product.name ?? item.productId} no es válido.`);
         }
@@ -188,6 +199,7 @@ export async function POST(request: Request) {
         return {
           productId: item.productId,
           productName: String(product.name ?? "Producto"),
+          ...(item.tone ? { tone: item.tone } : {}),
           price,
           quantity: item.quantity,
           subtotal: price * item.quantity,
@@ -231,7 +243,7 @@ export async function POST(request: Request) {
     if (message === "ORDER_NUMBER_CONFLICT") {
       return jsonError("No se pudo confirmar el número del pedido. Inténtalo de nuevo.", 409);
     }
-    if (/stock insuficiente|ya no está disponible|no se encontró el producto|cambió|no es válido/i.test(message)) {
+    if (/stock insuficiente|ya no está disponible|no se encontró el producto|cambió|no es válido|tono/i.test(message)) {
       return jsonError(message, 409);
     }
 

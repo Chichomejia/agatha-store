@@ -42,6 +42,7 @@ import {
   updateProduct,
 } from "@/services/productService";
 import { isAuthorizedAdmin, observeAuth } from "@/services/authService";
+import ProductToneEditor from "@/components/admin/ProductToneEditor";
 
 interface UploadedImage {
   url: string;
@@ -183,6 +184,7 @@ export default function EditarProductoPage() {
   const [images, setImages] = useState<
     UploadedImage[]
   >([]);
+  const [tones, setTones] = useState<string[]>([]);
 
   /* ==========================================
      CARGAR PRODUCTO
@@ -210,6 +212,7 @@ export default function EditarProductoPage() {
           stock: String(product.stock),
           imageUrl: product.image,
         });
+        setTones(product.tones ?? []);
 
         const productImages =
           product.images &&
@@ -359,6 +362,7 @@ export default function EditarProductoPage() {
         stock: Number(form.stock),
         imageUrl: imageUrls[0] ?? "",
         images: imageUrls,
+        tones,
       });
 
       router.push("/admin/productos");
@@ -563,6 +567,8 @@ export default function EditarProductoPage() {
                   className="min-h-12 w-full rounded-xl border border-gray-200 px-4 py-3 text-base outline-none transition focus:border-pink-400 focus:ring-2 focus:ring-pink-100"
                 />
               </div>
+
+              <ProductToneEditor tones={tones} onChange={setTones} id="edit-product-tones" />
 
               {/* DESCRIPCIÓN */}
 

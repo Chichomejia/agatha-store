@@ -92,7 +92,7 @@ function downloadSalesCsv(sales: Sale[]) {
     Number.isFinite(Number(sale.total)) ? Number(sale.total) : 0,
     Number.isFinite(Number(sale.profit)) ? Number(sale.profit) : 0,
     sale.items
-      .map((item) => `${item.quantity} x ${item.productName}`)
+      .map((item) => `${item.quantity} x ${item.productName}${item.tone ? ` (${item.tone})` : ""}`)
       .join("; "),
     sale.notes ?? "",
   ]);
@@ -400,7 +400,7 @@ export default function AdminVentasPage() {
                     <ul className="mt-4 space-y-1 border-t border-gray-100 pt-3 text-sm text-gray-600">
                       {sale.items.map((item, index) => (
                         <li key={`${item.productId}-${index}`}>
-                          {item.quantity} × {item.productName} · {formatCurrency(item.priceAtSale * item.quantity)}
+                          {item.quantity} × {item.productName}{item.tone ? ` · Tono: ${item.tone}` : ""} · {formatCurrency(item.priceAtSale * item.quantity)}
                         </li>
                       ))}
                     </ul>

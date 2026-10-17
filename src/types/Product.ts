@@ -5,6 +5,8 @@ export interface Product {
   price: number;
   image: string;
   images?: string[];
+  /** Opciones de tono que el cliente puede elegir al comprar. */
+  tones?: string[];
   category: string;
   rating?: number;
   stock: number;

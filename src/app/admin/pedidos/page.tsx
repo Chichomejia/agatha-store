@@ -342,7 +342,7 @@ export default function AdminPedidosPage() {
                       <ul className="mt-4 space-y-1 border-t border-gray-100 pt-3 text-sm text-gray-600">
                         {order.items.map((item, index) => (
                           <li key={`${item.productId}-${index}`}>
-                            {item.quantity} × {item.productName} ·{" "}
+                            {item.quantity} × {item.productName}{item.tone ? ` · Tono: ${item.tone}` : ""} ·{" "}
                             {formatCurrency(item.subtotal)}
                           </li>
                         ))}

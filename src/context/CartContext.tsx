@@ -15,15 +15,17 @@ import Toast from "@/components/ui/Toast";
 export interface CartItem {
   product: Product;
   quantity: number;
+  tone?: string;
 }
 
 interface CartContextType {
   items: CartItem[];
   isLoaded: boolean;
   syncProducts: (products: Product[]) => void;
-  addToCart: (product: Product, quantity?: number) => void;
-removeFromCart: (productId: string) => void;
-updateQuantity: (productId: string, quantity: number) => void;
+  addToCart: (product: Product, quantity?: number, tone?: string) => void;
+  removeFromCart: (productId: string, tone?: string) => void;
+  updateQuantity: (productId: string, quantity: number, tone?: string) => void;
+  changeTone: (productId: string, currentTone: string | undefined, nextTone: string) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
@@ -120,22 +122,26 @@ export function CartProvider({
 
   const addToCart = (
     product: Product,
-    quantity: number = 1
+    quantity: number = 1,
+    tone?: string,
   ) => {
+    if (product.tones?.length && (!tone || !product.tones.includes(tone))) {
+      showStockToast(`Elige un tono para ${product.name} antes de agregarlo.`);
+      return;
+    }
     setItems((currentItems) => {
       const existingItem =
         currentItems.find(
           (item) =>
-            item.product.id === product.id
+            item.product.id === product.id && item.tone === tone
         );
 
-      const currentQuantity =
-        existingItem?.quantity ?? 0;
+      const currentProductQuantity = currentItems
+        .filter((item) => item.product.id === product.id)
+        .reduce((total, item) => total + item.quantity, 0);
+      const newQuantity = (existingItem?.quantity ?? 0) + quantity;
 
-      const newQuantity =
-        currentQuantity + quantity;
-
-      if (newQuantity > product.stock) {
+      if (currentProductQuantity + quantity > product.stock) {
         showStockToast(
           `Solo quedan ${product.stock} unidades disponibles de ${product.name}.`
         );
@@ -145,7 +151,7 @@ export function CartProvider({
 
       if (existingItem) {
         return currentItems.map((item) =>
-          item.product.id === product.id
+          item.product.id === product.id && item.tone === tone
             ? {
                 ...item,
                 quantity: newQuantity,
@@ -159,6 +165,7 @@ export function CartProvider({
         {
           product,
           quantity,
+          ...(tone ? { tone } : {}),
         },
       ];
     });
@@ -168,13 +175,11 @@ export function CartProvider({
   // ELIMINAR
   // =========================
 
- const removeFromCart = (
-  productId: string
-) => {
+ const removeFromCart = (productId: string, tone?: string) => {
     setItems((currentItems) =>
       currentItems.filter(
         (item) =>
-          item.product.id !== productId
+          item.product.id !== productId || item.tone !== tone
       )
     );
   };
@@ -185,19 +190,23 @@ export function CartProvider({
 
  const updateQuantity = (
   productId: string,
-  quantity: number
+  quantity: number,
+  tone?: string,
 ) => {
     setItems((currentItems) => {
       const item = currentItems.find(
         (item) =>
-          item.product.id === productId
+          item.product.id === productId && item.tone === tone
       );
 
       if (!item) {
         return currentItems;
       }
 
-      if (quantity > item.product.stock) {
+      const otherToneQuantity = currentItems
+        .filter((entry) => entry.product.id === productId && entry.tone !== tone)
+        .reduce((total, entry) => total + entry.quantity, 0);
+      if (quantity + otherToneQuantity > item.product.stock) {
         showStockToast(
           `Solo quedan ${item.product.stock} unidades disponibles de ${item.product.name}.`
         );
@@ -208,18 +217,33 @@ export function CartProvider({
       if (quantity <= 0) {
         return currentItems.filter(
           (item) =>
-            item.product.id !== productId
+            item.product.id !== productId || item.tone !== tone
         );
       }
 
       return currentItems.map((item) =>
-        item.product.id === productId
+        item.product.id === productId && item.tone === tone
           ? {
               ...item,
               quantity,
             }
           : item
       );
+    });
+  };
+
+  const changeTone = (productId: string, currentTone: string | undefined, nextTone: string) => {
+    if (currentTone === nextTone) return;
+    setItems((currentItems) => {
+      const item = currentItems.find((entry) => entry.product.id === productId && entry.tone === currentTone);
+      if (!item || !item.product.tones?.includes(nextTone)) return currentItems;
+      const destination = currentItems.find((entry) => entry.product.id === productId && entry.tone === nextTone);
+      if (destination) {
+        return currentItems
+          .filter((entry) => !(entry.product.id === productId && entry.tone === currentTone))
+          .map((entry) => entry === destination ? { ...entry, quantity: entry.quantity + item.quantity } : entry);
+      }
+      return currentItems.map((entry) => entry === item ? { ...entry, tone: nextTone } : entry);
     });
   };
 
@@ -258,6 +282,7 @@ export function CartProvider({
         addToCart,
         removeFromCart,
         updateQuantity,
+        changeTone,
         clearCart,
         totalItems,
         totalPrice,

@@ -57,6 +57,7 @@ export default function ProductModal({
   ================================================== */
 
   const [quantity, setQuantity] = useState(1);
+  const [selectedTone, setSelectedTone] = useState("");
 
   /* ==================================================
      FAVORITOS
@@ -253,8 +254,9 @@ export default function ProductModal({
     if (product.stock <= 0) {
       return;
     }
+    if (product.tones?.length && !selectedTone) return;
 
-    addToCart(product, quantity);
+    addToCart(product, quantity, selectedTone || undefined);
 
     onClose();
 
@@ -737,6 +739,29 @@ export default function ProductModal({
             </div>
 
             {/* ==================================================
+                TONO
+            ================================================== */}
+
+            {product.tones && product.tones.length > 0 && (
+              <div className="mt-6">
+                <label htmlFor="product-tone" className="mb-2 block text-sm font-bold text-slate-900">
+                  Elige el tono <span className="text-pink-600">*</span>
+                </label>
+                <select
+                  id="product-tone"
+                  value={selectedTone}
+                  onChange={(event) => setSelectedTone(event.target.value)}
+                  required
+                  className="min-h-12 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base text-slate-900 outline-none transition focus:border-pink-400 focus:ring-2 focus:ring-pink-100"
+                >
+                  <option value="">Selecciona un tono</option>
+                  {product.tones.map((tone) => <option key={tone} value={tone}>{tone}</option>)}
+                </select>
+                <p className="mt-2 text-xs text-gray-500">Selecciona el tono para habilitar la compra.</p>
+              </div>
+            )}
+
+            {/* ==================================================
                 CANTIDAD
             ================================================== */}
 
@@ -795,7 +820,7 @@ export default function ProductModal({
             <div className="mt-6 flex gap-3">
               <div className="flex-1">
                 <LiquidButton
-                  disabled={product.stock <= 0}
+                  disabled={product.stock <= 0 || Boolean(product.tones?.length && !selectedTone)}
                   className="w-full"
                   onClick={handleBuyNow}
                 >

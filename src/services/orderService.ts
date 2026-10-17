@@ -135,6 +135,7 @@ export async function updateOrderStatus(
               priceAtSale: item.price,
               productId: item.productId,
               productName: item.productName,
+              ...(typeof item.tone === "string" ? { tone: item.tone } : {}),
               quantity: item.quantity,
             })),
             notes: customer.notes ?? "",
@@ -267,6 +268,7 @@ export async function createOrder({
       productId: item.product.id,
       quantity: item.quantity,
       expectedPrice: item.product.price,
+      ...(item.tone ? { tone: item.tone } : {}),
     })),
   });
   const sendOrder = async (forceTokenRefresh: boolean) => {
@@ -292,7 +294,7 @@ export async function createOrder({
     orderNumber?: string;
     subtotal?: number;
     total?: number;
-    items?: { productName: string; price: number; quantity: number }[];
+    items?: { productName: string; price: number; quantity: number; tone?: string }[];
   };
 
   if (!response.ok) {
@@ -314,6 +316,6 @@ export async function createOrder({
     orderNumber: string;
     subtotal: number;
     total: number;
-    items: { productName: string; price: number; quantity: number }[];
+    items: { productName: string; price: number; quantity: number; tone?: string }[];
   };
 }

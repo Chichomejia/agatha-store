@@ -256,6 +256,11 @@ export default function AdminProductosPage() {
                     <p className="mt-1 line-clamp-1 text-sm text-gray-500">
                       {product.description || "Sin descripción"}
                     </p>
+                    {product.tones?.length ? (
+                      <p className="mt-1 line-clamp-1 text-xs font-medium text-pink-700">
+                        Tonos: {product.tones.join(", ")}
+                      </p>
+                    ) : null}
                   </div>
 
                   {/* Categoría */}

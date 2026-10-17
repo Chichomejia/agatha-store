@@ -21,6 +21,7 @@ import { CldUploadWidget } from "next-cloudinary";
 
 import { createProduct } from "@/services/productService";
 import { isAuthorizedAdmin, observeAuth } from "@/services/authService";
+import ProductToneEditor from "@/components/admin/ProductToneEditor";
 
 interface UploadedImage {
   url: string;
@@ -49,6 +50,7 @@ export default function NuevoProductoPage() {
   const [images, setImages] = useState<
     UploadedImage[]
   >([]);
+  const [tones, setTones] = useState<string[]>([]);
 
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState("");
@@ -135,6 +137,7 @@ export default function NuevoProductoPage() {
         stock: Number(form.stock),
         imageUrl: allImages[0] ?? "",
         images: allImages,
+        tones,
       });
 
       router.push("/admin/productos");
@@ -294,6 +297,8 @@ export default function NuevoProductoPage() {
                   className="min-h-12 w-full rounded-xl border border-gray-200 px-4 py-3 text-base outline-none transition focus:border-pink-400 focus:ring-2 focus:ring-pink-100"
                 />
               </div>
+
+              <ProductToneEditor tones={tones} onChange={setTones} />
 
               {/* DESCRIPCIÓN */}
               <div className="md:col-span-2">

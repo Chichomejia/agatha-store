@@ -16,6 +16,7 @@ export default function CarritoPage() {
     totalPrice,
     removeFromCart,
     updateQuantity,
+    changeTone,
     clearCart,
   } = useCart();
 
@@ -106,10 +107,13 @@ export default function CarritoPage() {
               {items.map((item) => {
                 const subtotal =
                   item.product.price * item.quantity;
+                const productQuantity = items
+                  .filter((entry) => entry.product.id === item.product.id)
+                  .reduce((total, entry) => total + entry.quantity, 0);
 
                 return (
                   <div
-                    key={item.product.id}
+                    key={`${item.product.id}-${item.tone ?? "default"}`}
                     className="group rounded-3xl bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-5"
                   >
                     <div className="flex gap-4 sm:gap-6">
@@ -143,6 +147,16 @@ export default function CarritoPage() {
                         <h2 className="mt-1 truncate text-lg font-bold text-gray-900 sm:text-xl">
                           {item.product.name}
                         </h2>
+                        {item.tone && <p className="mt-1 text-sm font-medium text-pink-700">Tono: {item.tone}</p>}
+                        {item.product.tones?.length ? (
+                          <label className="mt-2 block max-w-xs text-sm font-medium text-gray-700">
+                            Cambiar tono
+                            <select value={item.tone ?? ""} onChange={(event) => changeTone(item.product.id, item.tone, event.target.value)} className="mt-1 min-h-11 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-base outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-100">
+                              {!item.product.tones.includes(item.tone ?? "") && <option value="">Elige un tono</option>}
+                              {item.product.tones.map((tone) => <option key={tone} value={tone}>{tone}</option>)}
+                            </select>
+                          </label>
+                        ) : null}
 
                         <p className="mt-1 hidden text-sm text-gray-500 sm:block">
                           {item.product.description}
@@ -159,7 +173,7 @@ export default function CarritoPage() {
                           <p className="mt-2 text-sm font-medium text-red-600">
                             Agotado o no disponible. Elimínalo para continuar.
                           </p>
-                        ) : item.quantity > item.product.stock ? (
+                        ) : productQuantity > item.product.stock ? (
                           <p className="mt-2 text-sm font-medium text-amber-700">
                             Solo quedan {item.product.stock} unidades. Ajusta la cantidad.
                           </p>
@@ -179,7 +193,8 @@ export default function CarritoPage() {
                               onClick={() =>
                                 updateQuantity(
                                   item.product.id,
-                                  item.quantity - 1
+                                  item.quantity - 1,
+                                  item.tone,
                                 )
                               }
                             className="flex h-11 w-11 items-center justify-center rounded-full text-gray-600 transition hover:bg-white hover:text-pink-600 hover:shadow"
@@ -197,11 +212,12 @@ export default function CarritoPage() {
                               onClick={() =>
                                 updateQuantity(
                                   item.product.id,
-                                  item.quantity + 1
+                                  item.quantity + 1,
+                                  item.tone,
                                 )
                               }
                               disabled={
-                                item.quantity >=
+                                productQuantity >=
                                 item.product.stock
                               }
                               className="flex h-11 w-11 items-center justify-center rounded-full text-gray-600 transition hover:bg-white hover:text-pink-600 hover:shadow disabled:cursor-not-allowed disabled:opacity-30"
@@ -216,10 +232,11 @@ export default function CarritoPage() {
                             type="button"
                             onClick={() =>
                               removeFromCart(
-                                item.product.id
+                                item.product.id,
+                                item.tone,
                               )
                             }
-                            aria-label={`Eliminar ${item.product.name} del carrito`}
+                            aria-label={`Eliminar ${item.product.name}${item.tone ? ` tono ${item.tone}` : ""} del carrito`}
                             className="flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm text-gray-500 transition hover:bg-red-50 hover:text-red-600"
                           >
                             <Trash2 size={16} />

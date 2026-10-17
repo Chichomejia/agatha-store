@@ -9,6 +9,7 @@ export interface Customer {
 export interface OrderItem {
   productId: string;
   productName: string;
+  tone?: string;
   price: number;
   costAtSale?: number;
   quantity: number;

@@ -7,6 +7,8 @@ export interface Product {
   images?: string[];
   /** Opciones de tono que el cliente puede elegir al comprar. */
   tones?: string[];
+  /** Unidades disponibles para cada tono. El stock general conserva la suma. */
+  toneStock?: Record<string, number>;
   category: string;
   rating?: number;
   stock: number;

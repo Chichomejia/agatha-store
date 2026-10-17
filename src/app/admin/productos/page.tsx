@@ -258,7 +258,7 @@ export default function AdminProductosPage() {
                     </p>
                     {product.tones?.length ? (
                       <p className="mt-1 line-clamp-1 text-xs font-medium text-pink-700">
-                        Tonos: {product.tones.join(", ")}
+                        Tonos: {product.tones.map((tone) => `${tone} (${product.toneStock?.[tone] ?? 0})`).join(", ")}
                       </p>
                     ) : null}
                   </div>

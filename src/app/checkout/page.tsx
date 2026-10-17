@@ -12,6 +12,7 @@ import { useCart } from "@/context/CartContext";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { SHIPPING_CONFIRMATION, SHIPPING_ESTIMATE } from "@/lib/shipping";
+import { getToneStock } from "@/lib/productInventory";
 import { STORE_WHATSAPP_NUMBER } from "@/lib/storeContact";
 
 function CheckoutProgress({ currentStep }: { currentStep: 2 | 3 }) {
@@ -110,18 +111,21 @@ export default function CheckoutPage() {
     void refreshCart();
   }, [isLoaded, items.length, refreshCart]);
 
-  const quantitiesByProduct = new Map<string, number>();
+  const quantitiesByVariant = new Map<string, number>();
   for (const item of items) {
-    quantitiesByProduct.set(item.product.id, (quantitiesByProduct.get(item.product.id) ?? 0) + item.quantity);
+    const variantKey = JSON.stringify([item.product.id, item.tone ?? null]);
+    quantitiesByVariant.set(variantKey, (quantitiesByVariant.get(variantKey) ?? 0) + item.quantity);
   }
-  const hasStockIssues = items.some(
-    (item) =>
-      !Number.isInteger(item.quantity) ||
-      item.quantity <= 0 ||
+  const hasStockIssues = items.some((item) => {
+    const variantQuantity = quantitiesByVariant.get(JSON.stringify([item.product.id, item.tone ?? null])) ?? 0;
+    const variantStock = item.product.tones?.length
+      ? getToneStock(item.product, item.tone)
+      : item.product.stock;
+    return !Number.isInteger(item.quantity) || item.quantity <= 0 ||
       (item.product.tones?.length
         ? !item.tone || !item.product.tones.includes(item.tone)
-        : Boolean(item.tone)),
-  ) || items.some((item) => (quantitiesByProduct.get(item.product.id) ?? 0) > item.product.stock);
+        : Boolean(item.tone)) || variantQuantity > variantStock;
+  });
 
   if (!isLoaded || cartReview === "loading") {
     return (

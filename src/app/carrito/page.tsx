@@ -8,6 +8,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useCart } from "@/context/CartContext";
 import { SHIPPING_CONFIRMATION, SHIPPING_ESTIMATE } from "@/lib/shipping";
+import { getToneStock } from "@/lib/productInventory";
 
 export default function CarritoPage() {
   const {
@@ -107,9 +108,9 @@ export default function CarritoPage() {
               {items.map((item) => {
                 const subtotal =
                   item.product.price * item.quantity;
-                const productQuantity = items
-                  .filter((entry) => entry.product.id === item.product.id)
-                  .reduce((total, entry) => total + entry.quantity, 0);
+                const availableStock = item.product.tones?.length
+                  ? getToneStock(item.product, item.tone)
+                  : item.product.stock;
 
                 return (
                   <div
@@ -153,7 +154,10 @@ export default function CarritoPage() {
                             Cambiar tono
                             <select value={item.tone ?? ""} onChange={(event) => changeTone(item.product.id, item.tone, event.target.value)} className="mt-1 min-h-11 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-base outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-100">
                               {!item.product.tones.includes(item.tone ?? "") && <option value="">Elige un tono</option>}
-                              {item.product.tones.map((tone) => <option key={tone} value={tone}>{tone}</option>)}
+                              {item.product.tones.map((tone) => {
+                                const toneAvailability = getToneStock(item.product, tone);
+                                return <option key={tone} value={tone} disabled={toneAvailability <= 0 && tone !== item.tone}>{tone} · {toneAvailability} disponibles</option>;
+                              })}
                             </select>
                           </label>
                         ) : null}
@@ -169,13 +173,15 @@ export default function CarritoPage() {
                           )}
                         </p>
 
-                        {item.product.stock <= 0 ? (
+                        {availableStock <= 0 ? (
                           <p className="mt-2 text-sm font-medium text-red-600">
                             Agotado o no disponible. Elimínalo para continuar.
                           </p>
-                        ) : productQuantity > item.product.stock ? (
+                        ) : item.product.tones?.length && !item.tone ? (
+                          <p className="mt-2 text-sm font-medium text-amber-700">Elige un tono para continuar.</p>
+                        ) : item.quantity > availableStock ? (
                           <p className="mt-2 text-sm font-medium text-amber-700">
-                            Solo quedan {item.product.stock} unidades. Ajusta la cantidad.
+                            Solo quedan {availableStock} unidades{item.tone ? ` del tono ${item.tone}` : ""}. Ajusta la cantidad.
                           </p>
                         ) : !Number.isInteger(item.quantity) || item.quantity <= 0 ? (
                           <p className="mt-2 text-sm font-medium text-amber-700">
@@ -217,8 +223,7 @@ export default function CarritoPage() {
                                 )
                               }
                               disabled={
-                                productQuantity >=
-                                item.product.stock
+                                item.quantity >= availableStock
                               }
                               className="flex h-11 w-11 items-center justify-center rounded-full text-gray-600 transition hover:bg-white hover:text-pink-600 hover:shadow disabled:cursor-not-allowed disabled:opacity-30"
                               aria-label="Aumentar cantidad"

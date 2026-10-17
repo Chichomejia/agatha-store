@@ -10,6 +10,7 @@ import {
 } from "react";
 
 import { Product } from "@/types/Product";
+import { getToneStock } from "@/lib/productInventory";
 import Toast from "@/components/ui/Toast";
 
 export interface CartItem {
@@ -136,14 +137,14 @@ export function CartProvider({
             item.product.id === product.id && item.tone === tone
         );
 
-      const currentProductQuantity = currentItems
-        .filter((item) => item.product.id === product.id)
-        .reduce((total, item) => total + item.quantity, 0);
       const newQuantity = (existingItem?.quantity ?? 0) + quantity;
+      const availableStock = product.tones?.length
+        ? getToneStock(product, tone)
+        : product.stock;
 
-      if (currentProductQuantity + quantity > product.stock) {
+      if (newQuantity > availableStock) {
         showStockToast(
-          `Solo quedan ${product.stock} unidades disponibles de ${product.name}.`
+          `Solo quedan ${availableStock} unidades disponibles${tone ? ` del tono ${tone}` : ""} de ${product.name}.`
         );
 
         return currentItems;
@@ -203,12 +204,12 @@ export function CartProvider({
         return currentItems;
       }
 
-      const otherToneQuantity = currentItems
-        .filter((entry) => entry.product.id === productId && entry.tone !== tone)
-        .reduce((total, entry) => total + entry.quantity, 0);
-      if (quantity + otherToneQuantity > item.product.stock) {
+      const availableStock = item.product.tones?.length
+        ? getToneStock(item.product, tone)
+        : item.product.stock;
+      if (quantity > availableStock) {
         showStockToast(
-          `Solo quedan ${item.product.stock} unidades disponibles de ${item.product.name}.`
+          `Solo quedan ${availableStock} unidades disponibles${tone ? ` del tono ${tone}` : ""} de ${item.product.name}.`
         );
 
         return currentItems;
@@ -238,6 +239,12 @@ export function CartProvider({
       const item = currentItems.find((entry) => entry.product.id === productId && entry.tone === currentTone);
       if (!item || !item.product.tones?.includes(nextTone)) return currentItems;
       const destination = currentItems.find((entry) => entry.product.id === productId && entry.tone === nextTone);
+      const targetQuantity = (destination?.quantity ?? 0) + item.quantity;
+      const nextToneStock = getToneStock(item.product, nextTone);
+      if (targetQuantity > nextToneStock) {
+        showStockToast(`Solo quedan ${nextToneStock} unidades disponibles del tono ${nextTone} de ${item.product.name}.`);
+        return currentItems;
+      }
       if (destination) {
         return currentItems
           .filter((entry) => !(entry.product.id === productId && entry.tone === currentTone))

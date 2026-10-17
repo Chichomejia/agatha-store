@@ -106,11 +106,16 @@ export async function POST(request: Request) {
 
   const { orderNumber, customer, items } = parsed.data;
   const quantitiesByProduct = new Map<string, number>();
+  const quantitiesByTone = new Map<string, number>();
   for (const item of items) {
     quantitiesByProduct.set(
       item.productId,
       (quantitiesByProduct.get(item.productId) ?? 0) + item.quantity,
     );
+    if (item.tone) {
+      const key = JSON.stringify([item.productId, item.tone]);
+      quantitiesByTone.set(key, (quantitiesByTone.get(key) ?? 0) + item.quantity);
+    }
   }
 
   const productIds = Array.from(quantitiesByProduct.keys());
@@ -187,6 +192,22 @@ export async function POST(request: Request) {
         if (availableTones.length === 0 && item.tone) {
           throw new Error(`El producto ${product.name ?? item.productId} no tiene tonos configurados.`);
         }
+        if (availableTones.length > 0) {
+          const savedToneStock = product.toneStock && typeof product.toneStock === "object"
+            ? product.toneStock as Record<string, unknown>
+            : {};
+          for (const tone of availableTones) {
+            const stock = Number(savedToneStock[tone] ?? 0);
+            if (!Number.isSafeInteger(stock) || stock < 0) {
+              throw new Error(`El inventario del tono ${tone} de ${product.name ?? item.productId} no es válido.`);
+            }
+          }
+          const availableToneStock = Number(savedToneStock[item.tone ?? ""] ?? 0);
+          const requestedToneStock = quantitiesByTone.get(JSON.stringify([item.productId, item.tone])) ?? 0;
+          if (!Number.isSafeInteger(availableToneStock) || availableToneStock < requestedToneStock) {
+            throw new Error(`Stock insuficiente para el tono ${item.tone ?? "seleccionado"} de ${product.name ?? item.productId}. Disponible: ${Number.isSafeInteger(availableToneStock) ? availableToneStock : 0}`);
+          }
+        }
         if (!Number.isSafeInteger(price) || price < 0) {
           throw new Error(`El precio de ${product.name ?? item.productId} no es válido.`);
         }
@@ -214,8 +235,28 @@ export async function POST(request: Request) {
       productSnapshots.forEach((snapshot, index) => {
         const productId = productIds[index];
         const quantity = quantitiesByProduct.get(productId) ?? 0;
+        const product = snapshot.data()!;
+        const availableTones = Array.isArray(product.tones)
+          ? product.tones.filter((tone: unknown): tone is string => typeof tone === "string")
+          : [];
+        const stockUpdate: DocumentData = { stock: Number(product.stock) - quantity };
+        if (availableTones.length > 0) {
+          const savedToneStock = product.toneStock && typeof product.toneStock === "object"
+            ? product.toneStock as Record<string, unknown>
+            : {};
+          const nextToneStock: Record<string, number> = {};
+          for (const tone of availableTones) {
+            const currentToneStock = Number(savedToneStock[tone] ?? 0);
+            if (!Number.isSafeInteger(currentToneStock) || currentToneStock < 0) {
+              throw new Error(`El inventario del tono ${tone} de ${product.name ?? productId} no es válido.`);
+            }
+            const reserved = quantitiesByTone.get(JSON.stringify([productId, tone])) ?? 0;
+            nextToneStock[tone] = currentToneStock - reserved;
+          }
+          stockUpdate.toneStock = nextToneStock;
+        }
         transaction.update(productRefs[index], {
-          stock: Number(snapshot.data()!.stock) - quantity,
+          ...stockUpdate,
         });
       });
 

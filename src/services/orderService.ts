@@ -150,6 +150,7 @@ export async function updateOrderStatus(
 
     if (status === "cancelado" && !isSameStatus) {
       const quantitiesByProduct = new Map<string, number>();
+      const quantitiesByTone = new Map<string, number>();
       const items = Array.isArray(orderData.items) ? orderData.items : [];
 
       if (items.length === 0) {
@@ -181,6 +182,10 @@ export async function updateOrderStatus(
           productId,
           (quantitiesByProduct.get(productId) ?? 0) + quantity,
         );
+        if (typeof item.tone === "string" && item.tone) {
+          const key = JSON.stringify([productId, item.tone]);
+          quantitiesByTone.set(key, (quantitiesByTone.get(key) ?? 0) + quantity);
+        }
       }
 
       for (const [productId, quantity] of quantitiesByProduct) {
@@ -199,6 +204,10 @@ export async function updateOrderStatus(
         productRefs.map((productRef) => transaction.get(productRef)),
       );
 
+      const inventoryUpdates: {
+        ref: (typeof productRefs)[number];
+        data: { stock: number; toneStock?: Record<string, number> };
+      }[] = [];
       productSnapshots.forEach((productSnapshot, index) => {
         if (!productSnapshot.exists()) {
           throw new Error(
@@ -220,10 +229,29 @@ export async function updateOrderStatus(
           );
         }
 
-        transaction.update(productRefs[index], {
-          stock: restoredStock,
-        });
+        const productData = productSnapshot.data();
+        const tones = Array.isArray(productData?.tones)
+          ? productData.tones.filter((tone: unknown): tone is string => typeof tone === "string")
+          : [];
+        const updateData: { stock: number; toneStock?: Record<string, number> } = { stock: restoredStock };
+        if (tones.length > 0) {
+          const savedToneStock = productData?.toneStock && typeof productData.toneStock === "object"
+            ? productData.toneStock as Record<string, unknown>
+            : {};
+          const restoredToneStock: Record<string, number> = {};
+          for (const tone of tones) {
+            const toneStock = Number(savedToneStock[tone] ?? 0);
+            const restoredToneQuantity = quantitiesByTone.get(JSON.stringify([productEntries[index][0], tone])) ?? 0;
+            if (!Number.isSafeInteger(toneStock) || toneStock < 0) {
+              throw new Error(`No se pudo cancelar: el stock del tono ${tone} no es válido. No se modificó el inventario.`);
+            }
+            restoredToneStock[tone] = toneStock + restoredToneQuantity;
+          }
+          updateData.toneStock = restoredToneStock;
+        }
+        inventoryUpdates.push({ ref: productRefs[index], data: updateData });
       });
+      inventoryUpdates.forEach(({ ref, data }) => transaction.update(ref, data));
     }
 
     if (!isSameStatus) {

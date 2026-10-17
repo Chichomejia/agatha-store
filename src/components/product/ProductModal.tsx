@@ -17,6 +17,7 @@ import {
 import { Product } from "@/types/Product";
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
+import { getAvailableStock, getToneStock } from "@/lib/productInventory";
 
 import QuantitySelector from "@/components/ui/QuantitySelector";
 import LiquidButton from "@/components/ui/LiquidButton";
@@ -58,6 +59,14 @@ export default function ProductModal({
 
   const [quantity, setQuantity] = useState(1);
   const [selectedTone, setSelectedTone] = useState("");
+  const availableStock = getAvailableStock(product);
+  const purchasableStock = product.tones?.length
+    ? getToneStock(product, selectedTone)
+    : product.stock;
+
+  useEffect(() => {
+    setQuantity(1);
+  }, [selectedTone]);
 
   /* ==================================================
      FAVORITOS
@@ -251,7 +260,7 @@ export default function ProductModal({
   ================================================== */
 
   const handleBuyNow = () => {
-    if (product.stock <= 0) {
+    if (purchasableStock <= 0) {
       return;
     }
     if (product.tones?.length && !selectedTone) return;
@@ -695,7 +704,7 @@ export default function ProductModal({
             ================================================== */}
 
             <div className="mt-6">
-              {product.stock > 0 ? (
+              {availableStock > 0 ? (
                 <div
                   className="
                     inline-flex
@@ -718,7 +727,7 @@ export default function ProductModal({
                     ·
                   </span>
 
-                  {product.stock} {product.stock === 1 ? "unidad" : "unidades"}
+                  {availableStock} {availableStock === 1 ? "unidad" : "unidades"}
                 </div>
               ) : (
                 <div
@@ -755,9 +764,16 @@ export default function ProductModal({
                   className="min-h-12 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base text-slate-900 outline-none transition focus:border-pink-400 focus:ring-2 focus:ring-pink-100"
                 >
                   <option value="">Selecciona un tono</option>
-                  {product.tones.map((tone) => <option key={tone} value={tone}>{tone}</option>)}
+                  {product.tones.map((tone) => {
+                    const stock = getToneStock(product, tone);
+                    return <option key={tone} value={tone} disabled={stock <= 0}>{tone} · {stock > 0 ? `${stock} disponibles` : "Agotado"}</option>;
+                  })}
                 </select>
-                <p className="mt-2 text-xs text-gray-500">Selecciona el tono para habilitar la compra.</p>
+                <p className="mt-2 text-xs text-gray-500">
+                  {selectedTone
+                    ? `${purchasableStock} unidades disponibles de este tono.`
+                    : "Selecciona un tono para ver su disponibilidad."}
+                </p>
               </div>
             )}
 
@@ -765,7 +781,7 @@ export default function ProductModal({
                 CANTIDAD
             ================================================== */}
 
-            {product.stock > 0 && (
+            {purchasableStock > 0 && (
               <div className="mt-7">
                 <div className="mb-3 flex items-center justify-between">
                   <p className="text-sm font-bold text-slate-900">
@@ -773,7 +789,7 @@ export default function ProductModal({
                   </p>
 
                   <span className="text-xs text-gray-400">
-                    Máximo {product.stock} {product.stock === 1 ? "unidad" : "unidades"}
+                    Máximo {purchasableStock} {purchasableStock === 1 ? "unidad" : "unidades"}
                   </span>
                 </div>
 
@@ -781,7 +797,7 @@ export default function ProductModal({
                   value={quantity}
                   onChange={setQuantity}
                   min={1}
-                  max={product.stock}
+                  max={purchasableStock}
                 />
               </div>
             )}
@@ -790,7 +806,7 @@ export default function ProductModal({
                 TOTAL
             ================================================== */}
 
-            {product.stock > 0 && (
+            {purchasableStock > 0 && (
               <div
                 className="
                   mt-6
@@ -820,7 +836,7 @@ export default function ProductModal({
             <div className="mt-6 flex gap-3">
               <div className="flex-1">
                 <LiquidButton
-                  disabled={product.stock <= 0 || Boolean(product.tones?.length && !selectedTone)}
+                  disabled={purchasableStock <= 0 || Boolean(product.tones?.length && !selectedTone)}
                   className="w-full"
                   onClick={handleBuyNow}
                 >

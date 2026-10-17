@@ -185,6 +185,8 @@ export default function EditarProductoPage() {
     UploadedImage[]
   >([]);
   const [tones, setTones] = useState<string[]>([]);
+  const [toneStock, setToneStock] = useState<Record<string, number>>({});
+  const [stockNeedsDistribution, setStockNeedsDistribution] = useState(false);
 
   /* ==========================================
      CARGAR PRODUCTO
@@ -213,6 +215,10 @@ export default function EditarProductoPage() {
           imageUrl: product.image,
         });
         setTones(product.tones ?? []);
+        setToneStock(product.toneStock ?? {});
+        const savedToneStock = product.toneStock ?? {};
+        const distributedStock = Object.values(savedToneStock).reduce((total, quantity) => total + quantity, 0);
+        setStockNeedsDistribution(Boolean(product.tones?.length && distributedStock < product.stock));
 
         const productImages =
           product.images &&
@@ -339,7 +345,7 @@ export default function EditarProductoPage() {
       !form.name ||
       !form.category ||
       !form.price ||
-      !form.stock
+      (!tones.length && !form.stock)
     ) {
       setFormError("Completa nombre, categoría, precio y stock para guardar los cambios.");
 
@@ -359,10 +365,13 @@ export default function EditarProductoPage() {
         category: form.category,
         price: Number(form.price),
         cost: Number(form.cost || 0),
-        stock: Number(form.stock),
+        stock: tones.length
+          ? Object.values(toneStock).reduce((total, quantity) => total + quantity, 0)
+          : Number(form.stock),
         imageUrl: imageUrls[0] ?? "",
         images: imageUrls,
         tones,
+        toneStock,
       });
 
       router.push("/admin/productos");
@@ -550,7 +559,7 @@ export default function EditarProductoPage() {
 
               {/* STOCK */}
 
-              <div>
+              {!tones.length ? <div>
                 <label htmlFor="edit-product-stock" className="mb-2 block text-sm font-semibold text-gray-700">
                   Stock *
                 </label>
@@ -566,9 +575,17 @@ export default function EditarProductoPage() {
                   onChange={handleChange}
                   className="min-h-12 w-full rounded-xl border border-gray-200 px-4 py-3 text-base outline-none transition focus:border-pink-400 focus:ring-2 focus:ring-pink-100"
                 />
-              </div>
+              </div> : <div className="flex flex-col justify-center rounded-xl bg-pink-50 p-4">
+                <p className="text-sm font-semibold text-gray-700">Stock total por tono</p>
+                <p className="mt-1 text-xl font-bold text-pink-700">{Object.values(toneStock).reduce((total, quantity) => total + quantity, 0)} unidades</p>
+              </div>}
 
-              <ProductToneEditor tones={tones} onChange={setTones} id="edit-product-tones" />
+              <ProductToneEditor tones={tones} toneStock={toneStock} onTonesChange={setTones} onToneStockChange={setToneStock} id="edit-product-tones" />
+              {stockNeedsDistribution && Object.values(toneStock).reduce((total, quantity) => total + quantity, 0) < Number(form.stock) && (
+                <p role="status" className="md:col-span-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                  Este producto tiene {form.stock} unidades de stock general que aún no están repartidas entre los tonos. Asigna la cantidad correcta a cada tono antes de volver a venderlo.
+                </p>
+              )}
 
               {/* DESCRIPCIÓN */}
 

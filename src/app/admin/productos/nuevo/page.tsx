@@ -51,6 +51,7 @@ export default function NuevoProductoPage() {
     UploadedImage[]
   >([]);
   const [tones, setTones] = useState<string[]>([]);
+  const [toneStock, setToneStock] = useState<Record<string, number>>({});
 
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState("");
@@ -108,7 +109,7 @@ export default function NuevoProductoPage() {
       !form.name ||
       !form.category ||
       !form.price ||
-      !form.stock
+      (!tones.length && !form.stock)
     ) {
       setFormError("Completa nombre, categoría, precio y stock para crear el producto.");
       return;
@@ -134,10 +135,13 @@ export default function NuevoProductoPage() {
         category: form.category,
         price: Number(form.price),
         cost: Number(form.cost || 0),
-        stock: Number(form.stock),
+        stock: tones.length
+          ? Object.values(toneStock).reduce((total, quantity) => total + quantity, 0)
+          : Number(form.stock),
         imageUrl: allImages[0] ?? "",
         images: allImages,
         tones,
+        toneStock,
       });
 
       router.push("/admin/productos");
@@ -279,7 +283,7 @@ export default function NuevoProductoPage() {
               </div>
 
               {/* STOCK */}
-              <div>
+              {!tones.length ? <div>
                 <label htmlFor="product-stock" className="mb-2 block text-sm font-semibold text-gray-700">
                   Stock *
                 </label>
@@ -296,9 +300,13 @@ export default function NuevoProductoPage() {
                   placeholder="10"
                   className="min-h-12 w-full rounded-xl border border-gray-200 px-4 py-3 text-base outline-none transition focus:border-pink-400 focus:ring-2 focus:ring-pink-100"
                 />
-              </div>
+              </div> : <div className="flex flex-col justify-center rounded-xl bg-pink-50 p-4">
+                <p className="text-sm font-semibold text-gray-700">Stock total</p>
+                <p className="mt-1 text-xl font-bold text-pink-700">{Object.values(toneStock).reduce((total, quantity) => total + quantity, 0)} unidades</p>
+                <p className="mt-1 text-xs text-gray-500">Se calcula con las existencias de cada tono.</p>
+              </div>}
 
-              <ProductToneEditor tones={tones} onChange={setTones} />
+              <ProductToneEditor tones={tones} toneStock={toneStock} onTonesChange={setTones} onToneStockChange={setToneStock} />
 
               {/* DESCRIPCIÓN */}
               <div className="md:col-span-2">

@@ -12,6 +12,7 @@ import ProductModal from "@/components/product/ProductModal";
 import { Product } from "@/types/Product";
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
+import { getAvailableStock } from "@/lib/productInventory";
 
 interface Props {
   product: Product;
@@ -23,6 +24,7 @@ export default function ProductCard({ product }: Props) {
   const { addToCart } = useCart();
   const { favoriteIds, toggleFavorite } = useFavorites();
   const isFavorite = favoriteIds.includes(product.id);
+  const availableStock = getAvailableStock(product);
 
   useEffect(() => {
     setImageFailed(false);
@@ -38,7 +40,7 @@ export default function ProductCard({ product }: Props) {
           ========================== */}
           <div className="relative h-56 overflow-hidden sm:h-64">
 
-            {product.stock <= 0 && (
+            {availableStock <= 0 && (
               <span className="absolute left-4 top-4 z-20 rounded-full bg-gray-900/90 px-3 py-1 text-xs font-semibold text-white shadow-lg">
                 Agotado
               </span>
@@ -164,19 +166,19 @@ export default function ProductCard({ product }: Props) {
 
               <div className="buy-button w-full sm:w-auto">
                 <LiquidButton
-                  disabled={product.stock <= 0}
+                  disabled={availableStock <= 0}
                   className="w-full sm:w-auto"
                   onClick={() => product.tones?.length ? setIsModalOpen(true) : addToCart(product)}
                 >
-                  {product.stock <= 0 ? "Agotado" : product.tones?.length ? "Elegir tono" : "Agregar"}
+                  {availableStock <= 0 ? "Agotado" : product.tones?.length ? "Elegir tono" : "Agregar"}
                 </LiquidButton>
               </div>
 
             </div>
-            <p className={`mt-3 text-xs font-medium ${product.stock > 0 ? "text-emerald-700" : "text-gray-500"}`}>
-              {product.stock > 0
-                ? product.stock <= 3
-                  ? `${product.stock} ${product.stock === 1 ? "unidad disponible" : "unidades disponibles"}`
+            <p className={`mt-3 text-xs font-medium ${availableStock > 0 ? "text-emerald-700" : "text-gray-500"}`}>
+              {availableStock > 0
+                ? availableStock <= 3
+                  ? `${availableStock} ${availableStock === 1 ? "unidad disponible" : "unidades disponibles"}`
                   : "Disponible"
                 : "Sin unidades disponibles"}
             </p>

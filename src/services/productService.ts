@@ -13,6 +13,16 @@ import {
 import { db } from "@/services/firebase";
 import { Product } from "@/types/Product";
 
+function readToneStock(data: Record<string, unknown>, tones: string[]) {
+  const savedStock = data.toneStock && typeof data.toneStock === "object"
+    ? data.toneStock as Record<string, unknown>
+    : {};
+  return Object.fromEntries(tones.filter((tone) => Object.prototype.hasOwnProperty.call(savedStock, tone)).map((tone) => {
+    const quantity = Number(savedStock[tone]);
+    return [tone, Number.isSafeInteger(quantity) && quantity >= 0 ? quantity : 0];
+  }));
+}
+
 /* ==========================================
    OBTENER PRODUCTOS
 ========================================== */
@@ -49,6 +59,9 @@ export async function getProducts(): Promise<Product[]> {
           : [],
         ...(Array.isArray(data.tones)
           ? { tones: data.tones.filter((tone: unknown): tone is string => typeof tone === "string") }
+          : {}),
+        ...(Array.isArray(data.tones) && data.tones.length > 0
+          ? { toneStock: readToneStock(data, data.tones.filter((tone: unknown): tone is string => typeof tone === "string")) }
           : {}),
         category: data.category ?? "",
         ...(typeof data.rating === "number" && Number.isFinite(data.rating)
@@ -96,6 +109,9 @@ export async function getAdminProducts(): Promise<Product[]> {
       images: Array.isArray(data.images) ? data.images : [],
       ...(Array.isArray(data.tones)
         ? { tones: data.tones.filter((tone: unknown): tone is string => typeof tone === "string") }
+        : {}),
+      ...(Array.isArray(data.tones) && data.tones.length > 0
+        ? { toneStock: readToneStock(data, data.tones.filter((tone: unknown): tone is string => typeof tone === "string")) }
         : {}),
       category: data.category ?? "",
       ...(typeof data.rating === "number" && Number.isFinite(data.rating)
@@ -155,6 +171,9 @@ export async function getProductById(
       ...(Array.isArray(data.tones)
         ? { tones: data.tones.filter((tone: unknown): tone is string => typeof tone === "string") }
         : {}),
+      ...(Array.isArray(data.tones) && data.tones.length > 0
+        ? { toneStock: readToneStock(data, data.tones.filter((tone: unknown): tone is string => typeof tone === "string")) }
+        : {}),
       category: data.category ?? "",
       ...(typeof data.rating === "number" && Number.isFinite(data.rating)
         ? { rating: data.rating }
@@ -187,6 +206,7 @@ interface CreateProductData {
   imageUrl: string;
   images?: string[];
   tones?: string[];
+  toneStock?: Record<string, number>;
 }
 export async function createProduct(
   product: CreateProductData
@@ -204,19 +224,23 @@ export async function createProduct(
           ? [product.imageUrl]
           : [];
 
+    const tones = (product.tones ?? []).map((tone) => tone.trim()).filter(Boolean);
+    const toneStock = tones.length ? readToneStock({ toneStock: product.toneStock }, tones) : undefined;
     const newProduct = {
       name: product.name,
       description: product.description,
       category: product.category,
       price: Number(product.price),
-      stock: Number(product.stock),
+      stock: tones.length
+        ? Object.values(toneStock ?? {}).reduce((total, quantity) => total + quantity, 0)
+        : Number(product.stock),
 
       // Primera imagen como imagen principal
       imageUrl: images[0] ?? "",
 
       // Todas las imágenes
       images,
-      ...(product.tones?.length ? { tones: product.tones } : {}),
+      ...(tones.length ? { tones, toneStock } : {}),
 
       isActive: true,
       createdAt: new Date(),
@@ -263,6 +287,7 @@ interface UpdateProductData {
   imageUrl: string;
   images?: string[];
   tones?: string[];
+  toneStock?: Record<string, number>;
 }
 
 export async function updateProduct(
@@ -285,6 +310,9 @@ export async function updateProduct(
           ? [product.imageUrl]
           : [];
 
+    const tones = (product.tones ?? []).map((tone) => tone.trim()).filter(Boolean);
+    const toneStock = tones.length ? readToneStock({ toneStock: product.toneStock }, tones) : undefined;
+
     const privateCostRef = doc(db, "productCosts", productId);
     const batch = writeBatch(db);
     batch.update(productRef, {
@@ -292,11 +320,14 @@ export async function updateProduct(
       description: product.description,
       category: product.category,
       price: Number(product.price),
-      stock: Number(product.stock),
+      stock: tones.length
+        ? Object.values(toneStock ?? {}).reduce((total, quantity) => total + quantity, 0)
+        : Number(product.stock),
       cost: deleteField(),
       imageUrl: images[0] ?? "",
       images,
-      tones: product.tones?.length ? product.tones : deleteField(),
+      tones: tones.length ? tones : deleteField(),
+      toneStock: tones.length ? toneStock : deleteField(),
     });
     batch.set(privateCostRef, {
       cost: Number(product.cost),
@@ -311,7 +342,7 @@ export async function updateProduct(
       ...product,
       imageUrl: images[0] ?? "",
       images,
-      ...(product.tones?.length ? { tones: product.tones } : {}),
+      ...(tones.length ? { tones, toneStock } : {}),
     };
   } catch (error) {
     console.error(

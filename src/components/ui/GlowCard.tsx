@@ -15,7 +15,7 @@ export default function GlowCard({
   const [tilt, setTilt] = useState<CSSProperties>({
     "--x": "50%",
     "--y": "50%",
-    transform: "none",
+    transform: "perspective(1100px) rotateX(0deg) rotateY(0deg)",
   } as CSSProperties);
 
   function handleMove(event: MouseEvent<HTMLDivElement>) {
@@ -38,7 +38,7 @@ export default function GlowCard({
     setTilt({
       "--x": "50%",
       "--y": "50%",
-      transform: "none",
+      transform: "perspective(1100px) rotateX(0deg) rotateY(0deg)",
     } as CSSProperties);
   }
 

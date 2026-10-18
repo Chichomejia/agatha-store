@@ -19,13 +19,13 @@ export default function GlowCard({
   } as CSSProperties);
 
   function handleMove(event: MouseEvent<HTMLDivElement>) {
-    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    if (!window.matchMedia("(min-width: 768px)").matches) return;
 
     const bounds = event.currentTarget.getBoundingClientRect();
     const x = ((event.clientX - bounds.left) / bounds.width) * 100;
     const y = ((event.clientY - bounds.top) / bounds.height) * 100;
-    const rotateY = ((x - 50) / 50) * 6;
-    const rotateX = -((y - 50) / 50) * 6;
+    const rotateY = ((x - 50) / 50) * 8;
+    const rotateX = -((y - 50) / 50) * 8;
 
     setTilt({
       "--x": `${x}%`,

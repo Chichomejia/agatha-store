@@ -142,11 +142,11 @@ body {
 .product-content { position: relative; z-index: 2; transition: transform .25s ease; }
 .buy-button { transition: transform .25s ease; }
 
-@media (hover: hover) and (pointer: fine) {
-  .glow-card:hover { box-shadow: 0 14px 36px rgba(219, 39, 119, .12); }
-  .glow-card:hover .product-image { transform: translateZ(24px) scale(1.06); }
-  .product-content { transform: translateZ(16px); }
-  .buy-button { transform: translateZ(32px); }
+@media (min-width: 768px) {
+  .glow-card:hover { box-shadow: 0 25px 60px rgba(236, 72, 153, .25); }
+  .glow-card:hover .product-image { transform: translateZ(60px) scale(1.12); }
+  .product-content { transform: translateZ(30px); }
+  .buy-button { transform: translateZ(80px); }
 }
 
 .quick-view-btn{

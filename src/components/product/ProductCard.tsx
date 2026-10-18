@@ -79,9 +79,8 @@ export default function ProductCard({ product }: Props) {
                 alt={product.name}
                 width={800}
                 height={800}
-                unoptimized
                 onError={() => setFailedImage(product.image)}
-                sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
+                sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 50vw"
                 className="product-image h-full w-full rounded-2xl object-contain p-1 drop-shadow-[0_8px_16px_rgba(31,41,55,0.12)] sm:p-2"
               />
             ) : (

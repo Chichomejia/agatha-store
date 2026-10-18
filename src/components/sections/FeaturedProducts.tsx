@@ -7,7 +7,7 @@ import { ArrowRight } from "lucide-react";
 import ProductCard from "@/components/product/ProductCard";
 import FeedbackMessage from "@/components/ui/FeedbackMessage";
 import LoadingState from "@/components/ui/LoadingState";
-import { getProducts } from "@/services/productService";
+import { getCachedProducts, getProducts } from "@/services/productService";
 import type { Product } from "@/types/Product";
 
 export default function FeaturedProducts() {
@@ -18,17 +18,25 @@ export default function FeaturedProducts() {
   useEffect(() => {
     let active = true;
 
-    getProducts()
-      .then((items) => {
-        if (active) setProducts(items.filter((item) => item.stock > 0).slice(0, 4));
-      })
-      .catch((loadError: unknown) => {
-        console.error("Error cargando productos de inicio:", loadError);
-        if (active) setError(true);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+    void (async () => {
+      const cachedProducts = await Promise.resolve(getCachedProducts());
+      if (active && cachedProducts !== null) {
+        setProducts(cachedProducts.filter((item) => item.stock > 0).slice(0, 4));
+        setLoading(false);
+      }
+
+      return getProducts()
+        .then((items) => {
+          if (active) setProducts(items.filter((item) => item.stock > 0).slice(0, 4));
+        })
+        .catch((loadError: unknown) => {
+          console.error("Error cargando productos de inicio:", loadError);
+          if (active && cachedProducts === null) setError(true);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    })();
 
     return () => {
       active = false;

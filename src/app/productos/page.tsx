@@ -8,7 +8,7 @@ import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/product/ProductCard";
 import FeedbackMessage from "@/components/ui/FeedbackMessage";
 import LoadingState from "@/components/ui/LoadingState";
-import { getProducts } from "@/services/productService";
+import { getCachedProducts, getProducts } from "@/services/productService";
 import type { Product } from "@/types/Product";
 
 type AvailabilityFilter = "all" | "available" | "sold-out";
@@ -26,14 +26,20 @@ export default function ProductosPage() {
   const [sort, setSort] = useState<SortOption>("name-asc");
 
   const loadProducts = useCallback(async () => {
-    setLoading(true);
+    const cachedProducts = await Promise.resolve(getCachedProducts());
+    if (cachedProducts !== null) {
+      setProducts(cachedProducts);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
     setError(false);
 
     try {
       setProducts(await getProducts());
     } catch (loadError) {
       console.error("Error cargando productos:", loadError);
-      setError(true);
+      if (cachedProducts === null) setError(true);
     } finally {
       setLoading(false);
     }

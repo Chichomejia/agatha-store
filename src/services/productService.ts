@@ -13,6 +13,63 @@ import {
 import { db } from "@/services/firebase";
 import { Product } from "@/types/Product";
 
+const PRODUCT_CACHE_KEY = "agatha-store-public-products-v1";
+const PRODUCT_CACHE_TTL_MS = 5 * 60 * 1000;
+
+interface ProductCache {
+  savedAt: number;
+  products: Product[];
+}
+
+let productsRequest: Promise<Product[]> | null = null;
+
+function isCachedProduct(value: unknown): value is Product {
+  if (!value || typeof value !== "object") return false;
+  const product = value as Partial<Product>;
+  return typeof product.id === "string"
+    && typeof product.name === "string"
+    && typeof product.description === "string"
+    && typeof product.price === "number"
+    && typeof product.image === "string"
+    && typeof product.category === "string"
+    && typeof product.stock === "number";
+}
+
+/** Returns a recent public catalog snapshot for instant first paint on repeat visits. */
+export function getCachedProducts(): Product[] | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const saved = window.localStorage.getItem(PRODUCT_CACHE_KEY);
+    if (!saved) return null;
+
+    const cache = JSON.parse(saved) as Partial<ProductCache>;
+    if (
+      typeof cache.savedAt !== "number"
+      || Date.now() - cache.savedAt > PRODUCT_CACHE_TTL_MS
+      || !Array.isArray(cache.products)
+      || !cache.products.every(isCachedProduct)
+    ) {
+      return null;
+    }
+
+    return cache.products;
+  } catch {
+    return null;
+  }
+}
+
+function saveCachedProducts(products: Product[]) {
+  if (typeof window === "undefined") return;
+
+  try {
+    const cache: ProductCache = { savedAt: Date.now(), products };
+    window.localStorage.setItem(PRODUCT_CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    // The catalog remains usable if storage is unavailable or full.
+  }
+}
+
 function readToneStock(data: Record<string, unknown>, tones: string[]) {
   const savedStock = data.toneStock && typeof data.toneStock === "object"
     ? data.toneStock as Record<string, unknown>
@@ -28,9 +85,18 @@ function readToneStock(data: Record<string, unknown>, tones: string[]) {
 ========================================== */
 
 export async function getProducts(): Promise<Product[]> {
-  try {
-    console.log("🔥 Consultando productos en Firestore...");
+  if (productsRequest) return productsRequest;
 
+  productsRequest = loadProductsFromFirestore();
+  try {
+    return await productsRequest;
+  } finally {
+    productsRequest = null;
+  }
+}
+
+async function loadProductsFromFirestore(): Promise<Product[]> {
+  try {
     const productsRef = collection(db, "products");
 
     const q = query(
@@ -39,11 +105,6 @@ export async function getProducts(): Promise<Product[]> {
     );
 
     const snapshot = await getDocs(q);
-
-    console.log(
-      "🔥 Productos encontrados:",
-      snapshot.size
-    );
 
     const products: Product[] = snapshot.docs.map((doc) => {
       const data = doc.data();
@@ -71,6 +132,7 @@ export async function getProducts(): Promise<Product[]> {
       };
     });
 
+    saveCachedProducts(products);
     return products;
   } catch (error) {
     console.error(

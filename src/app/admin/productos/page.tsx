@@ -15,6 +15,7 @@ import {
 import { Product } from "@/types/Product";
 import { getAdminProducts, migrateLegacyProductCosts } from "@/services/productService";
 import { isAuthorizedAdmin, observeAuth } from "@/services/authService";
+import FeedbackMessage from "@/components/ui/FeedbackMessage";
 
 export default function AdminProductosPage() {
   const router = useRouter();
@@ -160,15 +161,15 @@ export default function AdminProductosPage() {
         </div>
 
         {costMigrationMessage && (
-          <p role="status" className="mb-6 rounded-2xl border border-pink-100 bg-white px-5 py-4 text-sm text-gray-700 shadow-sm">
+          <FeedbackMessage tone="info" className="mb-6">
             {costMigrationMessage}
-          </p>
+          </FeedbackMessage>
         )}
 
         {productLoadError && (
-          <p role="alert" className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+          <FeedbackMessage tone="error" className="mb-6">
             {productLoadError}
-          </p>
+          </FeedbackMessage>
         )}
 
         {/* BUSCADOR */}

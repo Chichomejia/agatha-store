@@ -1,11 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
 
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/product/ProductCard";
+import FeedbackMessage from "@/components/ui/FeedbackMessage";
+import LoadingState from "@/components/ui/LoadingState";
 import { getProducts } from "@/services/productService";
 import type { Product } from "@/types/Product";
 
@@ -106,23 +108,32 @@ export default function ProductosPage() {
     <main className="min-h-screen bg-[#fff8fb]">
       <Navbar />
 
-      <section className="bg-gradient-to-br from-pink-100 via-[#fff3f8] to-white px-6 pb-12 pt-14 text-center sm:pb-14 sm:pt-16">
-        <span className="text-sm font-semibold uppercase tracking-[0.25em] text-pink-700">
+      <section className="bg-gradient-to-br from-pink-100 via-[#fff3f8] to-white px-4 pb-10 pt-10 text-center sm:px-6 sm:pb-14 sm:pt-16">
+        <span className="text-xs font-semibold uppercase tracking-[0.25em] text-pink-700 sm:text-sm">
           Agatha Store
         </span>
-        <h1 className="mt-3 text-4xl font-bold text-gray-900 md:text-5xl">
+        <h1 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl md:text-5xl">
           Encuentra tus <span className="text-pink-600">favoritos</span>
         </h1>
-        <p className="mx-auto mt-4 max-w-2xl leading-7 text-gray-600">
+        <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-gray-600 sm:mt-4 sm:text-base sm:leading-7">
           Explora el catálogo, compara opciones y elige lo que acompaña mejor tu rutina.
         </p>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-16 pt-8 sm:px-6 sm:pt-10">
-        <div className="mb-7 rounded-3xl border border-pink-100 bg-white p-4 shadow-sm sm:p-5">
-          <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700">
-            <SlidersHorizontal size={18} className="text-pink-600" />
-            Filtra el catálogo
+        <div className="mb-7 rounded-3xl border border-pink-100/80 bg-white p-4 shadow-sm sm:p-5">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-pink-50">
+                <SlidersHorizontal size={17} className="text-pink-600" />
+              </span>
+              Filtra el catálogo
+            </div>
+            {(search || categoryFilter !== "all" || availability !== "all" || minPrice || maxPrice) && (
+              <button type="button" onClick={clearFilters} className="min-h-10 rounded-full px-3 text-sm font-semibold text-pink-700 transition hover:bg-pink-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-pink-100">
+                Limpiar
+              </button>
+            )}
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-8">
             <label className="relative block xl:col-span-2">
@@ -172,30 +183,29 @@ export default function ProductosPage() {
         </div>
 
         {loading ? (
-          <div className="flex min-h-64 flex-col items-center justify-center rounded-3xl bg-white text-gray-500 shadow-sm">
-            <Loader2 className="h-8 w-8 animate-spin text-pink-600" />
-            <p className="mt-3">Cargando productos...</p>
-          </div>
+          <LoadingState label="Cargando productos..." />
         ) : error ? (
-          <div role="alert" className="rounded-3xl border border-red-200 bg-white p-10 text-center shadow-sm">
-            <p className="text-gray-700">No pudimos cargar el catálogo en este momento.</p>
-            <button type="button" onClick={() => void loadProducts()} className="mt-4 rounded-full bg-pink-600 px-6 py-3 font-semibold text-white hover:bg-pink-700">Intentar de nuevo</button>
-          </div>
+          <FeedbackMessage tone="error" className="flex-col items-center text-center sm:flex-row sm:text-left">
+            <div>
+              <p>No pudimos cargar el catálogo en este momento.</p>
+              <button type="button" onClick={() => void loadProducts()} className="button-secondary mt-3">Intentar de nuevo</button>
+            </div>
+          </FeedbackMessage>
         ) : products.length === 0 ? (
-          <div className="rounded-3xl bg-white p-12 text-center shadow-sm">
+          <div className="rounded-3xl border border-pink-100/80 bg-white p-8 text-center shadow-sm sm:p-12">
             <p className="text-lg font-semibold text-gray-800">No hay productos disponibles por ahora.</p>
           </div>
         ) : filteredProducts.length === 0 ? (
-          <div className="rounded-3xl bg-white p-12 text-center shadow-sm">
+          <div className="rounded-3xl border border-pink-100/80 bg-white p-8 text-center shadow-sm sm:p-12">
             <p className="text-lg font-semibold text-gray-800">No encontramos productos con esos filtros.</p>
             <button type="button" onClick={clearFilters} className="mt-4 font-semibold text-pink-700 underline underline-offset-4">Limpiar filtros</button>
           </div>
         ) : (
           <>
-            <p className="mb-5 text-sm text-gray-500" aria-live="polite">
+            <p className="mb-4 inline-flex min-h-9 items-center rounded-full border border-pink-100 bg-white px-4 text-sm text-gray-600 shadow-sm sm:mb-5" aria-live="polite">
               {filteredProducts.length} {filteredProducts.length === 1 ? "producto" : "productos"} de {products.length}
             </p>
-            <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-7 lg:grid-cols-3 xl:grid-cols-4">
               {filteredProducts.map((product) => <ProductCard key={product.id} product={product} />)}
             </div>
           </>

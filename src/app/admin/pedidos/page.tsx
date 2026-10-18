@@ -12,6 +12,8 @@ import {
   ORDER_STATUS_TRANSITIONS,
 } from "@/types/Order";
 import type { Order, OrderStatus } from "@/types/Order";
+import FeedbackMessage from "@/components/ui/FeedbackMessage";
+import LoadingState from "@/components/ui/LoadingState";
 
 type StatusFilter = "todos" | OrderStatus;
 
@@ -250,28 +252,19 @@ export default function AdminPedidosPage() {
         </section>
 
         {error && (
-          <p
-            role="alert"
-            className="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
-          >
+          <FeedbackMessage tone="error" className="mb-5">
             {error}
-          </p>
+          </FeedbackMessage>
         )}
 
         {notice && (
-          <p
-            role="status"
-            className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800"
-          >
+          <FeedbackMessage tone="success" className="mb-5">
             {notice}
-          </p>
+          </FeedbackMessage>
         )}
 
         {loading ? (
-          <div className="rounded-3xl bg-white p-10 text-center text-gray-500 shadow-sm">
-            <Loader2 className="mx-auto h-8 w-8 animate-spin text-pink-600" />
-            <p className="mt-3">Cargando pedidos...</p>
-          </div>
+          <LoadingState label="Cargando pedidos..." />
         ) : filteredOrders.length === 0 ? (
           <div className="rounded-3xl bg-white p-10 text-center shadow-sm">
             <p className="text-lg font-semibold text-gray-800">
@@ -300,12 +293,12 @@ export default function AdminPedidosPage() {
               return (
                 <article
                   key={orderId}
-                  className="rounded-3xl bg-white p-5 shadow-sm md:p-6"
+                  className="rounded-3xl bg-white p-4 shadow-sm sm:p-5 md:p-6"
                 >
                   <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-3">
-                        <h2 className="text-xl font-bold text-gray-900">
+                        <h2 className="break-words text-xl font-bold text-gray-900">
                           Pedido {order.orderNumber}
                         </h2>
                         <span
@@ -320,7 +313,7 @@ export default function AdminPedidosPage() {
                         {formatOrderDate(order.createdAt)}
                       </p>
 
-                      <div className="mt-4 grid gap-1 text-sm text-gray-700 sm:grid-cols-2">
+                      <div className="mt-4 grid gap-1 text-sm text-gray-700 sm:grid-cols-2 [&>p]:break-words">
                         <p>
                           <span className="font-semibold">Cliente:</span>{" "}
                           {order.customer?.name || "Sin nombre"}
@@ -339,7 +332,7 @@ export default function AdminPedidosPage() {
                         </p>
                       </div>
 
-                      <ul className="mt-4 space-y-1 border-t border-gray-100 pt-3 text-sm text-gray-600">
+                      <ul className="mt-4 space-y-1 border-t border-gray-100 pt-3 text-sm text-gray-600 [&>li]:break-words">
                         {order.items.map((item, index) => (
                           <li key={`${item.productId}-${index}`}>
                             {item.quantity} × {item.productName}{item.tone ? ` · Tono: ${item.tone}` : ""} ·{" "}
@@ -348,7 +341,7 @@ export default function AdminPedidosPage() {
                         ))}
                       </ul>
                       {order.customer?.notes && (
-                        <p className="mt-3 rounded-xl bg-gray-50 p-3 text-sm text-gray-600">
+                        <p className="mt-3 break-words rounded-xl bg-gray-50 p-3 text-sm text-gray-600">
                           <span className="font-semibold">Notas:</span>{" "}
                           {order.customer.notes}
                         </p>

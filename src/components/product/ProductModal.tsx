@@ -51,22 +51,18 @@ export default function ProductModal({
   ).filter(Boolean);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [selectedImageFailed, setSelectedImageFailed] = useState(false);
+  const [failedImage, setFailedImage] = useState("");
 
   /* ==================================================
      COMPRA
   ================================================== */
 
   const [quantity, setQuantity] = useState(1);
-  const [selectedTone, setSelectedTone] = useState("");
+  const [toneQuantities, setToneQuantities] = useState<Record<string, number>>({});
   const availableStock = getAvailableStock(product);
-  const purchasableStock = product.tones?.length
-    ? getToneStock(product, selectedTone)
-    : product.stock;
-
-  useEffect(() => {
-    setQuantity(1);
-  }, [selectedTone]);
+  const hasTones = Boolean(product.tones?.length);
+  const selectedToneUnits = Object.values(toneQuantities).reduce((sum, count) => sum + count, 0);
+  const purchasableStock = hasTones ? availableStock : product.stock;
 
   /* ==================================================
      FAVORITOS
@@ -85,6 +81,7 @@ export default function ProductModal({
   const [zoom, setZoom] = useState(1);
 
   const selectedImage = images[selectedIndex] ?? "";
+  const selectedImageFailed = failedImage === selectedImage;
 
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null;
@@ -132,11 +129,7 @@ export default function ProductModal({
     wasZoomedRef.current = isImageZoomed;
   }, [isImageZoomed]);
 
-  useEffect(() => {
-    setSelectedImageFailed(false);
-  }, [selectedImage]);
-
-  const total = product.price * quantity;
+  const total = product.price * (hasTones ? selectedToneUnits : quantity);
 
   /* ==================================================
      CAMBIAR IMAGEN
@@ -260,16 +253,26 @@ export default function ProductModal({
   ================================================== */
 
   const handleBuyNow = () => {
-    if (purchasableStock <= 0) {
-      return;
+    if (hasTones) {
+      const selection = Object.entries(toneQuantities).filter(([, count]) => count > 0);
+      if (!selection.length) return;
+      selection.forEach(([tone, count]) => addToCart(product, count, tone));
+    } else {
+      if (purchasableStock <= 0) return;
+      addToCart(product, quantity);
     }
-    if (product.tones?.length && !selectedTone) return;
-
-    addToCart(product, quantity, selectedTone || undefined);
 
     onClose();
 
     router.push("/carrito");
+  };
+
+  const setToneQuantity = (tone: string, count: number) => {
+    const stock = getToneStock(product, tone);
+    setToneQuantities((current) => ({
+      ...current,
+      [tone]: Math.max(0, Math.min(stock, count)),
+    }));
   };
 
   /* ==================================================
@@ -372,7 +375,7 @@ export default function ProductModal({
             className="
               relative
               flex
-              min-h-[430px]
+              min-h-[280px]
               flex-1
               flex-col
               bg-gradient-to-br
@@ -380,6 +383,7 @@ export default function ProductModal({
               via-white
               to-rose-50
               p-5
+              sm:min-h-[430px]
               md:min-h-[650px]
               md:p-8
             "
@@ -448,7 +452,7 @@ export default function ProductModal({
                     width={1000}
                     height={1000}
                     unoptimized
-                    onError={() => setSelectedImageFailed(true)}
+                    onError={() => setFailedImage(selectedImage)}
                     sizes="(min-width: 768px) 50vw, 90vw"
                     className="
                     max-h-[430px]
@@ -622,7 +626,8 @@ export default function ProductModal({
               flex-col
               overflow-y-auto
               bg-white
-              p-6
+              p-4
+              sm:p-6
               md:w-[48%]
               md:p-10
             "
@@ -647,11 +652,12 @@ export default function ProductModal({
               <h2
                 className="
                   mt-3
-                  text-3xl
+                  text-2xl
                   font-bold
                   leading-tight
                   tracking-tight
                   text-slate-900
+                  sm:text-3xl
                   md:text-4xl
                 "
               >
@@ -671,7 +677,7 @@ export default function ProductModal({
               <p
                 className="
                   mt-1
-                  text-4xl
+                  text-3xl
                   font-extrabold
                   tracking-tight
                   text-pink-600
@@ -753,27 +759,29 @@ export default function ProductModal({
 
             {product.tones && product.tones.length > 0 && (
               <div className="mt-6">
-                <label htmlFor="product-tone" className="mb-2 block text-sm font-bold text-slate-900">
-                  Elige el tono <span className="text-pink-600">*</span>
-                </label>
-                <select
-                  id="product-tone"
-                  value={selectedTone}
-                  onChange={(event) => setSelectedTone(event.target.value)}
-                  required
-                  className="min-h-12 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base text-slate-900 outline-none transition focus:border-pink-400 focus:ring-2 focus:ring-pink-100"
-                >
-                  <option value="">Selecciona un tono</option>
+                <p className="mb-2 text-sm font-bold text-slate-900" id="product-tone-heading">
+                  Elige tonos y cantidades
+                </p>
+                <div className="space-y-2" role="group" aria-labelledby="product-tone-heading">
                   {product.tones.map((tone) => {
                     const stock = getToneStock(product, tone);
-                    return <option key={tone} value={tone} disabled={stock <= 0}>{tone} · {stock > 0 ? `${stock} disponibles` : "Agotado"}</option>;
+                    const toneQuantity = toneQuantities[tone] ?? 0;
+                    return (
+                      <div key={tone} className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 px-3 py-2">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-slate-900">{tone}</p>
+                          <p className="text-xs text-gray-500">{stock > 0 ? `${stock} disponibles` : "Agotado"}</p>
+                        </div>
+                        <div className="inline-flex shrink-0 items-center overflow-hidden rounded-full border border-pink-200 bg-white">
+                          <button type="button" onClick={() => setToneQuantity(tone, toneQuantity - 1)} disabled={toneQuantity <= 0} aria-label={`Quitar una unidad del tono ${tone}`} className="flex h-10 w-10 items-center justify-center text-lg text-pink-600 transition hover:bg-pink-50 disabled:cursor-not-allowed disabled:opacity-30">−</button>
+                          <span aria-live="polite" aria-label={`${toneQuantity} unidades del tono ${tone}`} className="min-w-9 text-center text-sm font-semibold text-gray-800">{toneQuantity}</span>
+                          <button type="button" onClick={() => setToneQuantity(tone, toneQuantity + 1)} disabled={toneQuantity >= stock} aria-label={`Agregar una unidad del tono ${tone}`} className="flex h-10 w-10 items-center justify-center text-lg text-pink-600 transition hover:bg-pink-50 disabled:cursor-not-allowed disabled:opacity-30">+</button>
+                        </div>
+                      </div>
+                    );
                   })}
-                </select>
-                <p className="mt-2 text-xs text-gray-500">
-                  {selectedTone
-                    ? `${purchasableStock} unidades disponibles de este tono.`
-                    : "Selecciona un tono para ver su disponibilidad."}
-                </p>
+                </div>
+                <p className="mt-2 text-xs text-gray-500">Puedes combinar varios tonos. Seleccionados: {selectedToneUnits}.</p>
               </div>
             )}
 
@@ -781,7 +789,7 @@ export default function ProductModal({
                 CANTIDAD
             ================================================== */}
 
-            {purchasableStock > 0 && (
+            {!hasTones && purchasableStock > 0 && (
               <div className="mt-7">
                 <div className="mb-3 flex items-center justify-between">
                   <p className="text-sm font-bold text-slate-900">
@@ -806,7 +814,7 @@ export default function ProductModal({
                 TOTAL
             ================================================== */}
 
-            {purchasableStock > 0 && (
+            {((!hasTones && purchasableStock > 0) || (hasTones && selectedToneUnits > 0)) && (
               <div
                 className="
                   mt-6
@@ -833,16 +841,16 @@ export default function ProductModal({
                 BOTONES
             ================================================== */}
 
-            <div className="mt-6 flex gap-3">
-              <div className="flex-1">
+            <div className="mt-6 flex items-center gap-2 sm:gap-3">
+              <div className="min-w-0 flex-1">
                 <LiquidButton
-                  disabled={purchasableStock <= 0 || Boolean(product.tones?.length && !selectedTone)}
-                  className="w-full"
+                  disabled={hasTones ? selectedToneUnits <= 0 : purchasableStock <= 0}
+                  className="w-full px-2 text-sm leading-tight sm:px-4 sm:text-base"
                   onClick={handleBuyNow}
                 >
-                  <span className="flex items-center justify-center gap-2">
+                  <span className="flex flex-wrap items-center justify-center gap-2 text-center">
                     <ShoppingBag size={18} />
-                    Comprar ahora
+                    {hasTones ? "Agregar selección al carrito" : "Comprar ahora"}
                   </span>
                 </LiquidButton>
               </div>
@@ -891,7 +899,8 @@ export default function ProductModal({
               className="
                 mt-7
                 grid
-                grid-cols-2
+                grid-cols-1
+                sm:grid-cols-2
                 gap-3
               "
             >
@@ -903,7 +912,8 @@ export default function ProductModal({
                   border
                   border-gray-100
                   bg-gray-50/70
-                  p-4
+                  p-3
+                  sm:p-4
                 "
               >
                 <Truck
@@ -928,7 +938,8 @@ export default function ProductModal({
                   border
                   border-gray-100
                   bg-gray-50/70
-                  p-4
+                  p-3
+                  sm:p-4
                 "
               >
                 <MessageCircle
@@ -1055,7 +1066,7 @@ export default function ProductModal({
               width={1600}
               height={1600}
               unoptimized
-              onError={() => setSelectedImageFailed(true)}
+              onError={() => setFailedImage(selectedImage)}
               sizes="90vw"
               className="
                 max-h-[90vh]

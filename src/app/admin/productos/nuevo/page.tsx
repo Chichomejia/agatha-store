@@ -21,6 +21,7 @@ import { CldUploadWidget } from "next-cloudinary";
 
 import { createProduct } from "@/services/productService";
 import { isAuthorizedAdmin, observeAuth } from "@/services/authService";
+import FeedbackMessage from "@/components/ui/FeedbackMessage";
 import ProductToneEditor from "@/components/admin/ProductToneEditor";
 
 interface UploadedImage {
@@ -196,10 +197,10 @@ export default function NuevoProductoPage() {
           className="space-y-6"
         >
 
-          {formError && <p role="alert" aria-live="assertive" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700">{formError}</p>}
+          {formError && <FeedbackMessage tone="error">{formError}</FeedbackMessage>}
 
           {/* INFORMACIÓN */}
-          <section className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
+          <section className="rounded-3xl bg-white p-4 shadow-sm sm:p-6">
 
             <h2 className="mb-6 text-xl font-bold text-gray-900">
               Información del producto
@@ -329,7 +330,7 @@ export default function NuevoProductoPage() {
           </section>
 
           {/* IMÁGENES */}
-          <section className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
+          <section className="rounded-3xl bg-white p-4 shadow-sm sm:p-6">
 
             <div className="mb-5">
               <h2 className="text-xl font-bold text-gray-900">
@@ -472,7 +473,7 @@ export default function NuevoProductoPage() {
               onClick={() =>
                 router.push("/admin/productos")
               }
-              className="min-h-12 rounded-xl bg-white px-6 py-3 font-semibold text-gray-700 shadow-sm transition hover:bg-gray-100"
+              className="min-h-12 w-full rounded-xl bg-white px-6 py-3 font-semibold text-gray-700 shadow-sm transition hover:bg-gray-100 sm:w-auto"
             >
               Cancelar
             </button>
@@ -480,7 +481,7 @@ export default function NuevoProductoPage() {
             <button
               type="submit"
               disabled={isSaving}
-              className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-pink-600 px-7 py-3 font-semibold text-white shadow-sm transition hover:bg-pink-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-pink-600 px-7 py-3 font-semibold text-white shadow-sm transition hover:bg-pink-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
             >
               {isSaving ? (
                 <>

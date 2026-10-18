@@ -6,6 +6,7 @@ import { ArrowRight, MessageCircle, Send, ShoppingBag } from "lucide-react";
 
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import FeedbackMessage from "@/components/ui/FeedbackMessage";
 import { STORE_WHATSAPP_DISPLAY, STORE_WHATSAPP_URL } from "@/lib/storeContact";
 
 export default function ContactoPage() {
@@ -33,11 +34,11 @@ export default function ContactoPage() {
 
       <section className="relative overflow-hidden bg-gradient-to-br from-pink-100 via-[#fff3f8] to-white">
         <div aria-hidden="true" className="absolute -left-24 -top-28 h-80 w-80 rounded-full bg-pink-200/40 blur-3xl" />
-        <div className="relative mx-auto max-w-7xl px-6 py-16 sm:py-20">
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-pink-700">
+        <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-20">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-pink-700 sm:text-sm sm:tracking-[0.25em]">
             Agatha Store · Atención cercana
           </p>
-          <h1 className="mt-4 max-w-3xl text-4xl font-bold leading-tight text-gray-900 sm:text-5xl">
+          <h1 className="mt-4 max-w-3xl text-3xl font-bold leading-tight text-gray-900 sm:text-5xl">
             Estamos aquí para <span className="text-pink-600">ayudarte</span>
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-gray-600 sm:text-lg">
@@ -47,8 +48,8 @@ export default function ContactoPage() {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-7xl gap-8 px-6 py-12 sm:py-16 lg:grid-cols-[0.85fr_1.15fr]">
-        <aside className="rounded-[2rem] bg-gray-900 p-7 text-white shadow-xl sm:p-9">
+      <section className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:gap-8 sm:px-6 sm:py-16 lg:grid-cols-[0.85fr_1.15fr]">
+        <aside className="rounded-[2rem] bg-gray-900 p-5 text-white shadow-xl sm:p-9">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-pink-600">
             <MessageCircle size={27} />
           </div>
@@ -82,7 +83,7 @@ export default function ContactoPage() {
           </div>
         </aside>
 
-        <div className="rounded-[2rem] border border-pink-100 bg-white p-7 shadow-sm sm:p-9">
+        <div className="rounded-[2rem] border border-pink-100 bg-white p-5 shadow-sm sm:p-9">
           <h2 className="text-2xl font-bold text-gray-900">Envíanos un mensaje</h2>
           <p className="mt-2 text-gray-500">
             Completa tus datos y continuaremos la conversación en WhatsApp.
@@ -129,10 +130,10 @@ export default function ContactoPage() {
                 className="min-h-32 w-full resize-y rounded-xl border border-gray-200 px-4 py-3 outline-none transition placeholder:text-gray-400 focus:border-pink-400 focus:ring-4 focus:ring-pink-100"
               />
             </label>
-            {formError && <p id="contact-form-error" role="alert" aria-live="assertive" className="text-sm text-red-700">{formError}</p>}
+            {formError && <FeedbackMessage id="contact-form-error" tone="error">{formError}</FeedbackMessage>}
             <button
               type="submit"
-              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-pink-600 px-6 py-3.5 font-semibold text-white shadow-md shadow-pink-200 transition hover:bg-pink-700 sm:w-auto"
+              className="liquid-btn w-full px-6 py-3.5 sm:w-auto"
             >
               Continuar en WhatsApp <Send size={17} />
             </button>

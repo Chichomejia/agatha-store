@@ -10,9 +10,9 @@ export default function SectionTitle({
   subtitle,
 }: Props) {
   return (
-    <div className="text-center mb-12">
+    <div className="mb-8 text-center sm:mb-12">
 
-      <h2 className="text-4xl lg:text-5xl font-bold">
+      <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
 
         {title}
 
@@ -26,7 +26,7 @@ export default function SectionTitle({
       </h2>
 
       {subtitle && (
-        <p className="mt-4 text-gray-500 max-w-xl mx-auto">
+        <p className="mx-auto mt-3 max-w-xl px-4 text-sm leading-7 text-gray-500 sm:mt-4 sm:px-0 sm:text-base">
           {subtitle}
         </p>
       )}

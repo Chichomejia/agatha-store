@@ -17,6 +17,8 @@ import { deleteSale, getSales } from "@/services/saleService";
 import { getReceivables } from "@/services/receivableService";
 import type { Sale } from "@/types/Sale";
 import type { Receivable } from "@/types/Receivable";
+import FeedbackMessage from "@/components/ui/FeedbackMessage";
+import LoadingState from "@/components/ui/LoadingState";
 
 type SaleStatusFilter = "todos" | "pending" | "completed" | "cancelled";
 
@@ -315,31 +317,25 @@ export default function AdminVentasPage() {
         </section>
 
         {error && (
-          <p
-            role="alert"
-            className="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
-          >
+          <FeedbackMessage tone="error" className="mb-5">
             {error}
-          </p>
+          </FeedbackMessage>
         )}
 
         {receivablesError && !error && (
-          <p role="status" className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          <FeedbackMessage tone="warning" className="mb-5">
             No se pudo consultar el estado de los fiados. Publica las reglas actualizadas de Firestore para ver esta información.
-          </p>
+          </FeedbackMessage>
         )}
 
         {notice && (
-          <p role="status" className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+          <FeedbackMessage tone="success" className="mb-5">
             {notice}
-          </p>
+          </FeedbackMessage>
         )}
 
         {loading ? (
-          <div className="rounded-3xl bg-white p-10 text-center text-gray-500 shadow-sm">
-            <Loader2 className="mx-auto h-8 w-8 animate-spin text-pink-600" />
-            <p className="mt-3">Cargando ventas...</p>
-          </div>
+          <LoadingState label="Cargando ventas..." />
         ) : error ? null : filteredSales.length === 0 ? (
           <div className="rounded-3xl bg-white p-10 text-center shadow-sm">
             <p className="text-lg font-semibold text-gray-800">
@@ -358,12 +354,12 @@ export default function AdminVentasPage() {
             {filteredSales.map((sale) => (
               <article
                 key={sale.id}
-                className="rounded-3xl bg-white p-5 shadow-sm md:p-6"
+                className="rounded-3xl bg-white p-4 shadow-sm sm:p-5 md:p-6"
               >
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-3">
-                      <h2 className="text-xl font-bold text-gray-900">
+                      <h2 className="break-words text-xl font-bold text-gray-900">
                         {sale.clientName || "Venta"}
                       </h2>
                       <span
@@ -388,16 +384,16 @@ export default function AdminVentasPage() {
                         return <span className={`rounded-full px-3 py-1 text-xs font-bold ${paymentStyle}`}>{paymentLabel}</span>;
                       })()}
                     </div>
-                    <p className="mt-2 text-sm text-gray-500">
+                    <p className="mt-2 break-words text-sm text-gray-500">
                       {formatSaleDate(sale.date)} · {sale.clientPhone || "Sin teléfono"}
                     </p>
-                    <p className="mt-1 text-xs text-gray-400">
+                    <p className="mt-1 break-all text-xs text-gray-400">
                       {sale.orderNumber
                         ? `Pedido relacionado: ${sale.orderNumber}`
                         : `ID de venta: ${sale.id}`}
                     </p>
 
-                    <ul className="mt-4 space-y-1 border-t border-gray-100 pt-3 text-sm text-gray-600">
+                    <ul className="mt-4 space-y-1 border-t border-gray-100 pt-3 text-sm text-gray-600 [&>li]:break-words">
                       {sale.items.map((item, index) => (
                         <li key={`${item.productId}-${index}`}>
                           {item.quantity} × {item.productName}{item.tone ? ` · Tono: ${item.tone}` : ""} · {formatCurrency(item.priceAtSale * item.quantity)}
@@ -405,7 +401,7 @@ export default function AdminVentasPage() {
                       ))}
                     </ul>
                     {sale.notes && (
-                      <p className="mt-3 rounded-xl bg-gray-50 p-3 text-sm text-gray-600">
+                      <p className="mt-3 break-words rounded-xl bg-gray-50 p-3 text-sm text-gray-600">
                         <span className="font-semibold">Notas:</span> {sale.notes}
                       </p>
                     )}

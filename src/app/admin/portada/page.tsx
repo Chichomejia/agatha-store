@@ -6,6 +6,7 @@ import { ArrowLeft, ImagePlus, Loader2, Save, Upload } from "lucide-react";
 import { CldUploadWidget } from "next-cloudinary";
 
 import { isAuthorizedAdmin, observeAuth } from "@/services/authService";
+import FeedbackMessage from "@/components/ui/FeedbackMessage";
 import {
   DEFAULT_HOMEPAGE_SETTINGS,
   getHomepageSettings,
@@ -122,10 +123,10 @@ export default function AdminPortadaPage() {
             <p className="mt-3 text-xs text-gray-500">Recomendado: imagen vertical de buena resolución, JPG, PNG o WEBP; máximo 5 MB.</p>
           </section>
 
-          {error && <p role="alert" aria-live="assertive" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700">{error}</p>}
-          {saved && <p role="status" aria-live="polite" className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">Portada guardada correctamente.</p>}
+          {error && <FeedbackMessage tone="error">{error}</FeedbackMessage>}
+          {saved && <FeedbackMessage tone="success">Portada guardada correctamente.</FeedbackMessage>}
           <div className="flex justify-stretch sm:justify-end">
-            <button type="submit" disabled={saving} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-pink-600 px-6 py-3 font-semibold text-white shadow-md transition hover:bg-pink-700 disabled:cursor-wait disabled:opacity-60 sm:w-auto">
+            <button type="submit" disabled={saving} className="liquid-btn min-h-12 w-full px-6 py-3 sm:w-auto">
               {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
               {saving ? "Guardando…" : "Guardar portada"}
             </button>

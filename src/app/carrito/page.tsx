@@ -75,7 +75,7 @@ export default function CarritoPage() {
       <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
 
         {items.length === 0 ? (
-          <div className="flex min-h-[500px] flex-col items-center justify-center rounded-3xl bg-white px-6 text-center shadow-sm">
+          <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border border-pink-100/80 bg-white px-6 text-center shadow-sm sm:min-h-[500px]">
             <div className="flex h-24 w-24 items-center justify-center rounded-full bg-pink-50">
               <ShoppingBag
                 size={42}
@@ -94,7 +94,7 @@ export default function CarritoPage() {
 
             <Link
               href="/productos"
-              className="mt-7 rounded-full bg-pink-600 px-7 py-3 font-semibold text-white shadow-lg shadow-pink-200 transition hover:-translate-y-1 hover:bg-pink-700"
+              className="mt-7 inline-flex min-h-12 items-center justify-center rounded-full bg-gradient-to-r from-pink-600 to-pink-700 px-7 py-3 font-semibold text-white shadow-md shadow-pink-200 transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-pink-200"
             >
               Explorar productos
             </Link>
@@ -115,12 +115,12 @@ export default function CarritoPage() {
                 return (
                   <div
                     key={`${item.product.id}-${item.tone ?? "default"}`}
-                    className="group rounded-3xl bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-5"
+                    className="group rounded-3xl border border-pink-100/80 bg-white p-4 shadow-sm transition-shadow duration-300 hover:shadow-md sm:p-5"
                   >
                     <div className="flex gap-4 sm:gap-6">
 
                       {/* Imagen */}
-                      <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-2xl bg-pink-50 sm:h-36 sm:w-36">
+                      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-pink-50 sm:h-28 sm:w-28 md:h-36 md:w-36">
                       {item.product.image ? (
                         <Image
                           src={item.product.image}
@@ -128,7 +128,7 @@ export default function CarritoPage() {
                           width={288}
                           height={288}
                           unoptimized
-                          sizes="(min-width: 640px) 144px, 112px"
+                          sizes="(min-width: 768px) 144px, (min-width: 640px) 112px, 80px"
                           className="h-full w-full object-cover"
                         />
                       ) : (
@@ -145,7 +145,7 @@ export default function CarritoPage() {
                           {item.product.category}
                         </span>
 
-                        <h2 className="mt-1 truncate text-lg font-bold text-gray-900 sm:text-xl">
+                        <h2 className="mt-1 line-clamp-2 break-words text-base font-bold leading-snug text-gray-900 sm:text-xl">
                           {item.product.name}
                         </h2>
                         {item.tone && <p className="mt-1 text-sm font-medium text-pink-700">Tono: {item.tone}</p>}
@@ -171,6 +171,10 @@ export default function CarritoPage() {
                           {item.product.price.toLocaleString(
                             "es-CO"
                           )}
+                        </p>
+
+                        <p className="mt-1 text-xs text-gray-500 sm:hidden">
+                          Subtotal: <span className="font-semibold text-gray-800">${subtotal.toLocaleString("es-CO")}</span>
                         </p>
 
                         {availableStock <= 0 ? (
@@ -273,7 +277,7 @@ export default function CarritoPage() {
             </div>
 
             {/* Resumen */}
-            <aside className="h-fit rounded-3xl bg-white p-6 shadow-sm lg:sticky lg:top-28">
+            <aside className="h-fit rounded-3xl border border-pink-100/80 bg-white p-5 shadow-sm sm:p-6 lg:sticky lg:top-28">
 
               <h2 className="text-xl font-bold text-gray-900">
                 Resumen de compra
@@ -331,23 +335,7 @@ export default function CarritoPage() {
   onClick={() => {
     window.location.href = "/checkout";
   }}
-  className="
-    mt-8
-    w-full
-    rounded-full
-    bg-pink-600
-    px-6
-    py-4
-    text-white
-    font-bold
-    text-lg
-    shadow-lg
-    transition-all
-    duration-300
-    hover:bg-pink-700
-    hover:scale-[1.02]
-    active:scale-[0.98]
-  "
+  className="liquid-btn mt-8 w-full px-6 py-4 text-lg font-bold"
 >
   Finalizar compra
 </button>

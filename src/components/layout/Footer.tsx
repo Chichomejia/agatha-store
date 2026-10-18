@@ -7,7 +7,7 @@ export default function Footer() {
     <footer className="border-t border-pink-100 bg-white">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 sm:py-12 md:grid-cols-[1.4fr_1fr_1fr]">
         <div>
-          <Link href="/" className="inline-flex min-h-11 items-center rounded-sm font-serif text-2xl font-bold text-pink-600">
+          <Link href="/" className="inline-flex min-h-11 items-center rounded-sm font-[var(--font-playfair)] text-2xl font-bold tracking-tight text-pink-600">
             Agatha Store
           </Link>
           <p className="mt-3 max-w-sm text-sm leading-6 text-gray-500">

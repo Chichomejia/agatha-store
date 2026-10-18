@@ -1,14 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #1c1c1c;
-
-  --primary: #f5a9c5;
-  --secondary: #fff7fa;
+  --background: #fff8fb;
+  --foreground: #1f2937;
+  --text: var(--foreground);
+  --primary: #db2777;
+  --primary-hover: #be185d;
+  --primary-light: #fdf2f8;
+  --secondary: #d4af37;
   --accent: #d4af37;
-
-  --text: #1c1c1c;
+  --focus-ring: #be185d;
+  --brand-shadow: 0 8px 24px rgba(219, 39, 119, .2);
 }
 
 html {
@@ -16,8 +18,13 @@ html {
 }
 
 :focus-visible {
-  outline: 3px solid #be185d;
+  outline: 3px solid var(--focus-ring);
   outline-offset: 3px;
+}
+
+::selection {
+  background: var(--primary-light);
+  color: #831843;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -33,12 +40,27 @@ html {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+
+  .glow-card,
+  .product-image,
+  .product-content,
+  .buy-button {
+    transform: none !important;
+  }
 }
 
 body {
   background: var(--background);
   color: var(--text);
   font-family: var(--font-poppins);
+}
+
+@media (max-width: 640px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: max(16px, 1em) !important;
+  }
 }
 
 @keyframes starPop {
@@ -61,29 +83,15 @@ body {
   animation: starPop .45s ease forwards;
 }
 
-:root {
-  --primary: #E91E63;
-  --primary-light: #FCE4EC;
-  --secondary: #D4AF37;
-  --background: #FFF8FB;
-  --text: #1F2937;
-}
-
 .glow-card{
 
     position:relative;
 
     overflow:hidden;
 
-    transition:
-
-        transform .18s ease,
-
-        box-shadow .25s ease;
-
-    transform-style:preserve-3d;
-
-    will-change:transform;
+    border-radius: 1.5rem;
+    transform-style: preserve-3d;
+    transition: transform .22s ease, box-shadow .25s ease, border-color .25s ease;
 }
 
 .glow-card::before{
@@ -130,57 +138,15 @@ body {
     transform:translateX(150%);
 }
 
-.glow-card:hover{
+.product-image { transform: translateZ(0) scale(1); transition: transform .35s ease; }
+.product-content { position: relative; z-index: 2; transition: transform .25s ease; }
+.buy-button { transition: transform .25s ease; }
 
-    box-shadow:
-
-    0 25px 60px rgba(236,72,153,.25);
-
-}
-
-/* ========================= */
-/* PARALLAX PREMIUM */
-/* ========================= */
-
-.product-image{
-
-    transform:
-        translateZ(0)
-        scale(1);
-
-    transition:
-        transform .45s ease;
-}
-
-.glow-card:hover .product-image{
-
-    transform:
-        translateZ(60px)
-        scale(1.12);
-
-}
-
-.product-content{
-
-    position:relative;
-
-    z-index:2;
-
-    transform:
-        translateZ(30px);
-
-    transition:
-        transform .35s ease;
-
-}
-
-.buy-button{
-
-    transform:
-        translateZ(80px);
-
-    transition:
-        transform .35s ease;
+@media (hover: hover) and (pointer: fine) {
+  .glow-card:hover { box-shadow: 0 14px 36px rgba(219, 39, 119, .12); }
+  .glow-card:hover .product-image { transform: translateZ(24px) scale(1.06); }
+  .product-content { transform: translateZ(16px); }
+  .buy-button { transform: translateZ(32px); }
 }
 
 .quick-view-btn{
@@ -205,60 +171,120 @@ body {
   }
 }
 
-.group button:hover svg{
-
-    color:#ec4899;
-
-    fill:#ec4899;
-
-    transform:scale(1.2);
-
-    transition:.25s;
-}
-
 /* ===========================
    LIQUID BUTTON
 =========================== */
 
 .liquid-btn{
-
-    position:relative;
-
-    overflow:hidden;
-
-    border:none;
-
-    cursor:pointer;
-
-    padding:14px 28px;
-
-    border-radius:999px;
-
-    background:#ec4899;
-
-    color:white;
-
-    font-weight:700;
-
-    transition:
-        transform .25s,
-        box-shadow .25s;
-
-    box-shadow:
-        0 10px 25px rgba(236,72,153,.35);
-
+  position: relative;
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  padding: .75rem 1.5rem;
+  background: linear-gradient(135deg, #ec4899, var(--primary));
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--brand-shadow);
+  transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
 }
 
-.liquid-btn:hover{
-
-    transform:
-        translateY(-3px)
-        scale(1.03);
-
-    box-shadow:
-        0 18px 40px rgba(236,72,153,.45);
-
+@media (hover: hover) and (pointer: fine) {
+  .liquid-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    filter: saturate(1.08);
+    box-shadow: 0 10px 24px rgba(219, 39, 119, .26);
+  }
 }
+
+.liquid-btn:active:not(:disabled) { transform: scale(.98); }
+.liquid-btn:disabled { cursor: not-allowed; opacity: .55; box-shadow: none; }
+.liquid-btn:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+
+.liquid-btn:not(:disabled):focus-visible {
+  box-shadow: 0 0 0 4px var(--primary-light), var(--brand-shadow);
+}
+
+.feedback-message {
+  display: flex;
+  align-items: flex-start;
+  gap: .75rem;
+  border: 1px solid;
+  border-radius: 1rem;
+  padding: 1rem;
+  font-size: .875rem;
+  line-height: 1.5rem;
+}
+
+.feedback-message--error {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.feedback-message--success {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.feedback-message--warning {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.feedback-message--info {
+  border-color: #fbcfe8;
+  background: #fdf2f8;
+  color: #9d174d;
+}
+
+.loading-state {
+  display: flex;
+  min-height: 16rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .75rem;
+  border: 1px solid rgba(251, 207, 232, .8);
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, .9);
+  padding: 2rem;
+  color: #6b7280;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(31, 41, 55, .05);
+}
+
+.button-secondary {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  border: 1px solid #fbcfe8;
+  border-radius: 999px;
+  background: #fff;
+  padding: .75rem 1.5rem;
+  color: #9d174d;
+  font-weight: 600;
+  transition: transform .18s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+.button-secondary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: #f9a8d4;
+  background: var(--primary-light);
+}
+
+.button-secondary:active:not(:disabled) { transform: scale(.985); }
+.button-secondary:disabled { cursor: not-allowed; opacity: .55; }
+.button-secondary:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 
 .liquid-bg{
 

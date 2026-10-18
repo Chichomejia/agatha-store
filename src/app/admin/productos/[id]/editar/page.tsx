@@ -43,6 +43,8 @@ import {
 } from "@/services/productService";
 import { isAuthorizedAdmin, observeAuth } from "@/services/authService";
 import ProductToneEditor from "@/components/admin/ProductToneEditor";
+import FeedbackMessage from "@/components/ui/FeedbackMessage";
+import LoadingState from "@/components/ui/LoadingState";
 
 interface UploadedImage {
   url: string;
@@ -394,13 +396,7 @@ export default function EditarProductoPage() {
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-pink-50" aria-busy="true">
-        <div className="text-center">
-          <div aria-hidden="true" className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-pink-200 border-t-pink-600 motion-reduce:animate-none" />
-
-          <p role="status" className="mt-4 font-medium text-gray-700">
-            Cargando producto...
-          </p>
-        </div>
+        <LoadingState label="Cargando producto…" />
       </main>
     );
   }
@@ -410,7 +406,7 @@ export default function EditarProductoPage() {
       <main className="flex min-h-screen items-center justify-center bg-pink-50 px-4 py-8">
         <section className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-sm sm:p-8" aria-labelledby="product-load-error-title">
           <h1 id="product-load-error-title" className="text-xl font-bold text-gray-900">No se pudo abrir el producto</h1>
-          <p role="alert" className="mt-3 leading-6 text-red-700">{loadError}</p>
+          <FeedbackMessage tone="error" className="mt-3">{loadError}</FeedbackMessage>
           <button
             type="button"
             onClick={() => router.push("/admin/productos")}
@@ -468,13 +464,13 @@ export default function EditarProductoPage() {
           className="space-y-6"
         >
 
-          {formError && <p role="alert" aria-live="assertive" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700">{formError}</p>}
+          {formError && <FeedbackMessage tone="error">{formError}</FeedbackMessage>}
 
           {/* ==================================
               INFORMACIÓN
           ================================== */}
 
-          <section className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
+          <section className="rounded-3xl bg-white p-4 shadow-sm sm:p-6">
 
             <h2 className="mb-6 text-xl font-bold text-gray-900">
               Información del producto
@@ -582,9 +578,9 @@ export default function EditarProductoPage() {
 
               <ProductToneEditor tones={tones} toneStock={toneStock} onTonesChange={setTones} onToneStockChange={setToneStock} id="edit-product-tones" />
               {stockNeedsDistribution && Object.values(toneStock).reduce((total, quantity) => total + quantity, 0) < Number(form.stock) && (
-                <p role="status" className="md:col-span-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                <FeedbackMessage tone="warning" className="md:col-span-2">
                   Este producto tiene {form.stock} unidades de stock general que aún no están repartidas entre los tonos. Asigna la cantidad correcta a cada tono antes de volver a venderlo.
-                </p>
+                </FeedbackMessage>
               )}
 
               {/* DESCRIPCIÓN */}
@@ -612,7 +608,7 @@ export default function EditarProductoPage() {
               IMÁGENES
           ================================== */}
 
-          <section className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
+          <section className="rounded-3xl bg-white p-4 shadow-sm sm:p-6">
 
             <div className="mb-5">
 
@@ -777,7 +773,7 @@ export default function EditarProductoPage() {
               onClick={() =>
                 router.push("/admin/productos")
               }
-              className="min-h-12 rounded-xl bg-white px-6 py-3 font-semibold text-gray-700 shadow-sm transition hover:bg-gray-100"
+              className="min-h-12 w-full rounded-xl bg-white px-6 py-3 font-semibold text-gray-700 shadow-sm transition hover:bg-gray-100 sm:w-auto"
             >
               Cancelar
             </button>
@@ -785,7 +781,7 @@ export default function EditarProductoPage() {
             <button
               type="submit"
               disabled={isSaving}
-              className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-pink-600 px-7 py-3 font-semibold text-white shadow-sm transition hover:bg-pink-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-pink-600 px-7 py-3 font-semibold text-white shadow-sm transition hover:bg-pink-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
             >
               {isSaving ? (
                 <>

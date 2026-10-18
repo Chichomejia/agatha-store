@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
+import FeedbackMessage from "@/components/ui/FeedbackMessage";
 
 interface ProductToneEditorProps {
   tones: string[];
@@ -69,7 +70,7 @@ export default function ProductToneEditor({
           Agregar tono
         </button>
       </div>
-      {message && <p role="status" className="mt-2 text-sm text-amber-700">{message}</p>}
+      {message && <FeedbackMessage tone="warning" className="mt-2">{message}</FeedbackMessage>}
       {tones.length > 0 && (
         <ul className="mt-3 space-y-2" aria-label="Tonos e inventario">
           {tones.map((tone) => (

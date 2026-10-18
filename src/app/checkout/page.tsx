@@ -4,13 +4,14 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { AlertCircle, ArrowLeft, CheckCircle2, Copy, MessageCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Copy, MessageCircle } from "lucide-react";
 import { createOrder } from "@/services/orderService";
 import { getProducts } from "@/services/productService";
 
 import { useCart } from "@/context/CartContext";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import FeedbackMessage from "@/components/ui/FeedbackMessage";
 import { SHIPPING_CONFIRMATION, SHIPPING_ESTIMATE } from "@/lib/shipping";
 import { getToneStock } from "@/lib/productInventory";
 import { STORE_WHATSAPP_NUMBER } from "@/lib/storeContact";
@@ -330,7 +331,7 @@ ${form.notes || "Ninguna"}
       <>
       <Navbar />
       <main className="min-h-screen bg-pink-50 flex items-center justify-center px-6">
-        <div className="w-full max-w-xl rounded-3xl bg-white p-6 text-center shadow-xl sm:p-10">
+        <div className="w-full max-w-xl rounded-3xl border border-pink-100/80 bg-white p-5 text-center shadow-lg sm:p-10">
           <CheckoutProgress currentStep={3} />
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-pink-100">
             <CheckCircle2
@@ -493,8 +494,7 @@ ${form.notes || "Ninguna"}
         </div>
 
         {submitError && (
-          <div role="alert" aria-live="assertive" className="mb-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-700">
-            <AlertCircle className="mt-0.5 shrink-0" size={18} />
+          <FeedbackMessage tone="error" className="mb-6">
             <p>
               {submitError}{" "}
               {/stock insuficiente|ya no está disponible|no se encontró el producto|el precio de .* cambió/i.test(
@@ -517,29 +517,33 @@ ${form.notes || "Ninguna"}
                 </a>
               )}
             </p>
-          </div>
+          </FeedbackMessage>
         )}
 
         {cartReview === "error" && (
-          <div role="alert" className="mb-6 flex flex-col items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-            <p>No pudimos revisar los precios y las existencias. Vuelve a intentarlo para confirmar el pedido.</p>
-            <button
-              type="button"
-              onClick={() => void refreshCart()}
-              className="min-h-11 shrink-0 rounded-lg px-2 font-semibold underline underline-offset-2"
-            >
-              Reintentar
-            </button>
-          </div>
+          <FeedbackMessage tone="warning" role="alert" className="mb-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p>No pudimos revisar los precios y las existencias. Vuelve a intentarlo para confirmar el pedido.</p>
+              <button
+                type="button"
+                onClick={() => void refreshCart()}
+                className="button-secondary min-h-11 shrink-0 px-4 py-2"
+              >
+                Reintentar
+              </button>
+            </div>
+          </FeedbackMessage>
         )}
 
         {cartReview === "ready" && hasStockIssues && (
-          <div role="alert" className="mb-6 flex flex-col items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900 sm:flex-row sm:justify-between sm:gap-4">
-            <p>Revisa que cada producto tenga un tono disponible y que la cantidad total no supere el stock. Corrige el carrito antes de confirmar.</p>
-            <Link href="/carrito" className="inline-flex min-h-11 items-center rounded-lg px-2 font-semibold underline underline-offset-2">
-              Revisar carrito
-            </Link>
-          </div>
+          <FeedbackMessage tone="warning" role="alert" className="mb-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p>Revisa que cada producto tenga un tono disponible y que la cantidad total no supere el stock. Corrige el carrito antes de confirmar.</p>
+              <Link href="/carrito" className="button-secondary min-h-11 shrink-0 px-4 py-2">
+                Revisar carrito
+              </Link>
+            </div>
+          </FeedbackMessage>
         )}
 
         <form
@@ -549,7 +553,7 @@ ${form.notes || "Ninguna"}
         >
 
           {/* DATOS DEL CLIENTE */}
-          <div className="rounded-3xl bg-white p-5 shadow-lg sm:p-8">
+          <div className="rounded-3xl border border-pink-100/80 bg-white p-5 shadow-sm sm:p-8">
 
             <h2 className="text-2xl font-bold text-gray-900">
               Datos de entrega
@@ -665,7 +669,7 @@ ${form.notes || "Ninguna"}
           </div>
 
           {/* RESUMEN */}
-          <div className="h-fit rounded-3xl bg-white p-8 shadow-lg">
+          <div className="h-fit rounded-3xl border border-pink-100/80 bg-white p-5 shadow-sm sm:p-8 lg:sticky lg:top-28">
 
             <h2 className="text-2xl font-bold text-gray-900">
               Resumen
@@ -727,23 +731,7 @@ ${form.notes || "Ninguna"}
           <button
   type="submit"
   disabled={isSubmitting || cartReview !== "ready" || hasStockIssues}
-  className="
-    mt-8
-    w-full
-    rounded-full
-    bg-pink-600
-    px-6
-    py-4
-    font-bold
-    text-white
-    shadow-lg
-    transition
-    hover:scale-[1.02]
-    hover:bg-pink-700
-    disabled:cursor-not-allowed
-    disabled:opacity-60
-    disabled:hover:scale-100
-  "
+  className="liquid-btn mt-8 w-full px-6 py-4 font-bold disabled:cursor-not-allowed disabled:opacity-60"
 >
   {isSubmitting
     ? "Registrando pedido..."

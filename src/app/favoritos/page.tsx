@@ -2,11 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Heart, Loader2 } from "lucide-react";
+import { ArrowRight, Heart } from "lucide-react";
 
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/product/ProductCard";
+import FeedbackMessage from "@/components/ui/FeedbackMessage";
+import LoadingState from "@/components/ui/LoadingState";
 import { useFavorites } from "@/context/FavoritesContext";
 import { getProducts } from "@/services/productService";
 import type { Product } from "@/types/Product";
@@ -62,25 +64,22 @@ export default function FavoritesPage() {
         </div>
         <p className="mt-3 text-gray-600">Guarda aquí los productos que quieres volver a encontrar.</p>
 
-        {error && <p role="alert" className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</p>}
+        {error && <FeedbackMessage tone="error" className="mt-8">{error}</FeedbackMessage>}
 
         {loading ? (
-          <div role="status" className="mt-10 rounded-3xl bg-white p-10 text-center text-gray-500 shadow-sm">
-            <Loader2 className="mx-auto h-8 w-8 animate-spin text-pink-600" />
-            <p className="mt-3">Cargando tus favoritos…</p>
-          </div>
+          <LoadingState label="Cargando tus favoritos…" className="mt-10" />
         ) : favoriteProducts.length > 0 ? (
-          <div className="mt-10 grid gap-7 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-7 lg:grid-cols-3 xl:grid-cols-4">
             {favoriteProducts.map((product) => <ProductCard key={product.id} product={product} />)}
           </div>
         ) : !error ? (
-          <div className="mt-10 rounded-3xl bg-white px-6 py-14 text-center shadow-sm">
+          <div className="mt-10 rounded-3xl border border-pink-100/80 bg-white px-6 py-12 text-center shadow-sm sm:py-14">
             <Heart className="mx-auto text-pink-300" size={40} aria-hidden="true" />
             <h2 className="mt-4 text-xl font-bold text-gray-900">
               {favoriteIds.length > 0 ? "Esos productos ya no están disponibles" : "Aún no tienes favoritos"}
             </h2>
             <p className="mt-2 text-gray-600">Explora el catálogo y toca el corazón de los productos que te gusten.</p>
-            <Link href="/productos" className="mt-6 inline-flex min-h-12 items-center gap-2 rounded-full bg-pink-600 px-6 py-3 font-semibold text-white transition hover:bg-pink-700">
+            <Link href="/productos" className="liquid-btn mt-6 min-h-12 gap-2 px-6 py-3 font-semibold">
               Explorar productos <ArrowRight size={18} />
             </Link>
           </div>

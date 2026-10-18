@@ -12,6 +12,7 @@ import {
   EyeOff,
   ArrowRight,
 } from "lucide-react";
+import FeedbackMessage from "@/components/ui/FeedbackMessage";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -85,7 +86,7 @@ router.push("/admin");
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-pink-50 via-white to-rose-100 px-5">
+    <main className="relative flex min-h-svh items-center justify-center overflow-hidden bg-gradient-to-br from-pink-50 via-white to-rose-100 px-4 py-6 sm:min-h-screen sm:px-5 sm:py-8">
 
       {/* Decoración */}
 
@@ -97,7 +98,7 @@ router.push("/admin");
 
       <div className="relative z-10 w-full max-w-md">
 
-        <div className="rounded-[2rem] border border-white/70 bg-white/90 p-8 shadow-2xl backdrop-blur-xl md:p-10">
+        <div className="rounded-[2rem] border border-white/70 bg-white/90 p-6 shadow-2xl backdrop-blur-xl sm:p-8 md:p-10">
 
           {/* Logo / nombre */}
 
@@ -127,9 +128,9 @@ router.push("/admin");
           {/* Error */}
 
           {error && (
-            <div role="alert" aria-live="assertive" className="mt-6 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            <FeedbackMessage tone="error" className="mt-6 font-medium">
               {error}
-            </div>
+            </FeedbackMessage>
           )}
 
           {/* Formulario */}
@@ -235,9 +236,9 @@ router.push("/admin");
             </div>
 
             {recoveryMessage && (
-              <p role="status" className="text-sm text-emerald-700">
+              <FeedbackMessage tone="success" className="text-sm">
                 {recoveryMessage}
-              </p>
+              </FeedbackMessage>
             )}
 
             <button
